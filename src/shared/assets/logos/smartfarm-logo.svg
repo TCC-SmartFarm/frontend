@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 56" fill="none">
+  
+  <g transform="translate(4, 4)">
+    
+    <path d="M24 46 C 24 38, 24 30, 24 22" stroke="#456830" stroke-width="2.5" stroke-linecap="round"></path>
+    
+    <path d="M24 30 C 18 30, 12 26, 10 18 C 18 18, 23 22, 24 28 Z" fill="#456830"></path>
+    
+    <path d="M24 24 C 30 24, 38 19, 40 10 C 30 9, 25 15, 24 22 Z" fill="#5d8440"></path>
+    
+    <path d="M6 46 C 14 44, 34 44, 42 46" stroke="#6b5a3d" stroke-width="2" stroke-linecap="round" fill="none"></path>
+  </g>
+  
+  <g transform="translate(64, 0)" fill="#1a281a" font-family="Plus Jakarta Sans, system-ui, sans-serif" font-weight="700">
+    <text x="0" y="36" font-size="28" letter-spacing="-0.5">SmartFarm</text>
+  </g>
+</svg>

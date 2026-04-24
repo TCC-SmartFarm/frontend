@@ -1,0 +1,288 @@
+/* =============================================================
+   SmartFarm — Colors & Type Tokens
+   ============================================================= */
+
+/* ---------- Fonts ---------- */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  /* =========================================================
+     COLOR — Primary (Verde Folha / Deep leaf green)
+     Earthy, dense green. Not neon, not tech-y.
+     Evokes healthy plants, deep foliage, forest shadow.
+     ========================================================= */
+  --sf-leaf-50:  #f2f6ee;   /* backgrounds, hover fills */
+  --sf-leaf-100: #e2ecd9;
+  --sf-leaf-200: #c6d9b4;
+  --sf-leaf-300: #a3c084;
+  --sf-leaf-400: #7fa45a;
+  --sf-leaf-500: #5d8440;   /* mid leaf */
+  --sf-leaf-600: #456830;   /* primary — deep, confident */
+  --sf-leaf-700: #35502a;   /* primary hover / emphasis */
+  --sf-leaf-800: #263a20;
+  --sf-leaf-900: #1a281a;   /* near-black green, for text on light */
+
+  /* =========================================================
+     COLOR — Warm neutrals (Terra / Areia / Madeira)
+     Warm, slightly golden. NEVER cool grey.
+     ========================================================= */
+  --sf-sand-50:  #faf7f1;   /* page background — warm paper */
+  --sf-sand-100: #f3ede0;   /* card fills, subtle surfaces */
+  --sf-sand-200: #e7ddc8;   /* dividers, muted chips */
+  --sf-sand-300: #d3c3a2;   /* strong divider, borders */
+  --sf-sand-400: #b09a70;   /* wood-tone accent */
+  --sf-sand-500: #8a7550;   /* wood, timestamps */
+  --sf-sand-600: #6b5a3d;   /* caption text on warm bg */
+  --sf-sand-700: #4e4130;
+  --sf-sand-800: #362d22;   /* body text (never pure black) */
+  --sf-sand-900: #201a13;   /* headlines */
+
+  /* =========================================================
+     COLOR — Earth accent (Terra vermelha / Brazilian red soil)
+     Secondary warm accent — for emphasis, never primary.
+     ========================================================= */
+  --sf-clay-50:  #fcf2ea;
+  --sf-clay-100: #f6dcc7;
+  --sf-clay-200: #e8b68a;
+  --sf-clay-300: #d4905a;
+  --sf-clay-400: #b97239;
+  --sf-clay-500: #9a5a2a;
+  --sf-clay-600: #7c4820;
+
+  /* =========================================================
+     COLOR — Semantic
+     Tuned to sit with the earthy palette (no pure highlighter
+     yellows or Slack-green successes)
+     ========================================================= */
+  /* Success — healthy reading, in range */
+  --sf-ok-bg:   #e7efd9;
+  --sf-ok-fg:   #3d5f22;
+  --sf-ok-dot:  #6b9a3a;
+
+  /* Warning — attention, not alarm. Warm mustard. */
+  --sf-warn-bg:  #fbeecb;
+  --sf-warn-fg:  #6f5310;
+  --sf-warn-dot: #c89a1f;
+
+  /* Alert — critical, needs action. Ripe tomato, not fire-engine. */
+  --sf-alert-bg:  #fadfd4;
+  --sf-alert-fg:  #8a2d15;
+  --sf-alert-dot: #c7451f;
+
+  /* Info — sky over the field (used sparingly) */
+  --sf-info-bg:  #dde9ee;
+  --sf-info-fg:  #26465a;
+  --sf-info-dot: #5d87a0;
+
+  /* =========================================================
+     SENSOR CHANNEL COLORS
+     Distinct hues for the 6 sensor streams, balanced against
+     the earthy palette (no neons).
+     ========================================================= */
+  --sf-ch-soil-temp:  #b97239;  /* warm clay */
+  --sf-ch-soil-moist: #2e6b7a;  /* deep teal — water-in-earth */
+  --sf-ch-air-humid:  #5d87a0;  /* sky blue-grey */
+  --sf-ch-light:      #c89a1f;  /* sun gold */
+  --sf-ch-air-temp:   #a14a2e;  /* sunburnt red */
+  --sf-ch-battery:    --sf-leaf-600;
+
+  /* =========================================================
+     SEMANTIC ALIASES (light mode)
+     ========================================================= */
+  --sf-bg:          var(--sf-sand-50);
+  --sf-bg-raised:   #ffffff;           /* cards pop off the warm page */
+  --sf-bg-sunken:   var(--sf-sand-100);
+  --sf-bg-inset:    var(--sf-sand-200);
+
+  --sf-fg:          var(--sf-sand-900); /* primary text */
+  --sf-fg-muted:    var(--sf-sand-700); /* secondary text */
+  --sf-fg-subtle:   var(--sf-sand-600); /* caption, label */
+  --sf-fg-faint:    var(--sf-sand-500);
+  --sf-fg-onbrand:  #ffffff;
+
+  --sf-border:        var(--sf-sand-200);
+  --sf-border-strong: var(--sf-sand-300);
+  --sf-border-focus:  var(--sf-leaf-600);
+
+  --sf-brand:         var(--sf-leaf-600);
+  --sf-brand-hover:   var(--sf-leaf-700);
+  --sf-brand-active:  var(--sf-leaf-800);
+  --sf-brand-soft-bg: var(--sf-leaf-50);
+  --sf-brand-soft-fg: var(--sf-leaf-700);
+
+  /* =========================================================
+     TYPE FAMILIES
+     ========================================================= */
+  --sf-font-display: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --sf-font-body:    'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --sf-font-data:    'IBM Plex Sans Condensed', 'Plus Jakarta Sans', sans-serif;
+  --sf-font-mono:    'IBM Plex Mono', ui-monospace, monospace;
+
+  /* =========================================================
+     TYPE SCALE — major second-ish, with a jump for hero values
+     ========================================================= */
+  --sf-text-xs:   12px;
+  --sf-text-sm:   14px;
+  --sf-text-base: 16px;
+  --sf-text-md:   18px;
+  --sf-text-lg:   20px;
+  --sf-text-xl:   24px;
+  --sf-text-2xl:  30px;
+  --sf-text-3xl:  38px;
+  --sf-text-4xl:  48px;
+  --sf-text-hero: 64px;   /* sensor value readouts */
+
+  --sf-lh-tight:  1.1;
+  --sf-lh-snug:   1.25;
+  --sf-lh-normal: 1.5;
+  --sf-lh-loose:  1.7;
+
+  --sf-ls-tight:  -0.02em;
+  --sf-ls-normal: 0;
+  --sf-ls-wide:   0.04em;
+  --sf-ls-caps:   0.08em;
+
+  /* =========================================================
+     SPACING — 4px base
+     ========================================================= */
+  --sf-s-0:   0;
+  --sf-s-1:   4px;
+  --sf-s-2:   8px;
+  --sf-s-3:   12px;
+  --sf-s-4:   16px;
+  --sf-s-5:   20px;
+  --sf-s-6:   24px;
+  --sf-s-8:   32px;
+  --sf-s-10:  40px;
+  --sf-s-12:  48px;
+  --sf-s-16:  64px;
+  --sf-s-20:  80px;
+
+  /* =========================================================
+     RADII
+     Generous but not pill-y. Feels friendly, not childish.
+     ========================================================= */
+  --sf-r-xs:  4px;
+  --sf-r-sm:  6px;
+  --sf-r-md:  10px;
+  --sf-r-lg:  14px;
+  --sf-r-xl:  20px;
+  --sf-r-2xl: 28px;
+  --sf-r-pill: 999px;
+
+  /* =========================================================
+     SHADOWS — soft, warm-tinted (never neutral grey)
+     ========================================================= */
+  --sf-shadow-xs: 0 1px 2px rgba(54, 45, 34, 0.06);
+  --sf-shadow-sm: 0 1px 3px rgba(54, 45, 34, 0.08), 0 1px 2px rgba(54, 45, 34, 0.04);
+  --sf-shadow-md: 0 4px 12px rgba(54, 45, 34, 0.08), 0 2px 4px rgba(54, 45, 34, 0.05);
+  --sf-shadow-lg: 0 12px 28px rgba(54, 45, 34, 0.12), 0 4px 8px rgba(54, 45, 34, 0.06);
+  --sf-shadow-xl: 0 24px 48px rgba(54, 45, 34, 0.16), 0 8px 16px rgba(54, 45, 34, 0.08);
+
+  /* Inset shadow for pressed / inputs */
+  --sf-shadow-inset: inset 0 1px 2px rgba(54, 45, 34, 0.08);
+
+  /* =========================================================
+     MOTION
+     ========================================================= */
+  --sf-ease-out:  cubic-bezier(0.22, 0.61, 0.36, 1);
+  --sf-ease-in:   cubic-bezier(0.55, 0.06, 0.68, 0.19);
+  --sf-ease-io:   cubic-bezier(0.65, 0, 0.35, 1);
+
+  --sf-dur-fast:   120ms;
+  --sf-dur-normal: 200ms;
+  --sf-dur-slow:   320ms;
+}
+
+/* =============================================================
+   SEMANTIC TYPE — apply as classes OR inherit via element tags
+   ============================================================= */
+html, body {
+  font-family: var(--sf-font-body);
+  font-size: var(--sf-text-base);
+  line-height: var(--sf-lh-normal);
+  color: var(--sf-fg);
+  background: var(--sf-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.sf-h1, h1 {
+  font-family: var(--sf-font-display);
+  font-size: var(--sf-text-4xl);
+  line-height: var(--sf-lh-tight);
+  letter-spacing: var(--sf-ls-tight);
+  font-weight: 700;
+  color: var(--sf-fg);
+}
+
+.sf-h2, h2 {
+  font-family: var(--sf-font-display);
+  font-size: var(--sf-text-3xl);
+  line-height: var(--sf-lh-snug);
+  letter-spacing: var(--sf-ls-tight);
+  font-weight: 700;
+  color: var(--sf-fg);
+}
+
+.sf-h3, h3 {
+  font-family: var(--sf-font-display);
+  font-size: var(--sf-text-2xl);
+  line-height: var(--sf-lh-snug);
+  font-weight: 600;
+  color: var(--sf-fg);
+}
+
+.sf-h4, h4 {
+  font-family: var(--sf-font-display);
+  font-size: var(--sf-text-xl);
+  line-height: var(--sf-lh-snug);
+  font-weight: 600;
+  color: var(--sf-fg);
+}
+
+.sf-body { font-size: var(--sf-text-base); line-height: var(--sf-lh-normal); color: var(--sf-fg); }
+.sf-body-lg { font-size: var(--sf-text-md); line-height: var(--sf-lh-normal); color: var(--sf-fg); }
+.sf-caption { font-size: var(--sf-text-sm); line-height: var(--sf-lh-snug); color: var(--sf-fg-subtle); }
+.sf-label {
+  font-size: var(--sf-text-xs);
+  font-weight: 600;
+  letter-spacing: var(--sf-ls-caps);
+  text-transform: uppercase;
+  color: var(--sf-fg-subtle);
+}
+
+/* DATA TYPE — hero readout, the star of every sensor card */
+.sf-data-hero {
+  font-family: var(--sf-font-data);
+  font-size: var(--sf-text-hero);
+  line-height: 0.95;
+  letter-spacing: var(--sf-ls-tight);
+  font-weight: 600;
+  color: var(--sf-fg);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+.sf-data-lg {
+  font-family: var(--sf-font-data);
+  font-size: var(--sf-text-3xl);
+  line-height: 1;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.sf-data {
+  font-family: var(--sf-font-data);
+  font-size: var(--sf-text-base);
+  font-variant-numeric: tabular-nums;
+}
+.sf-unit {
+  font-family: var(--sf-font-body);
+  font-size: 0.42em;
+  font-weight: 500;
+  color: var(--sf-fg-muted);
+  margin-left: 0.15em;
+  letter-spacing: 0;
+}
+
+/* Mono for codes, IDs, serial numbers */
+.sf-mono { font-family: var(--sf-font-mono); font-size: var(--sf-text-sm); }

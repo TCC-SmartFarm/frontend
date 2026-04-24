@@ -1,130 +1,150 @@
+@import "./tokens.css";
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
-
-@custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    --font-heading: var(--font-sans);
-    --font-sans: 'Geist Variable', sans-serif;
-    --color-sidebar-ring: var(--sidebar-ring);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar: var(--sidebar);
-    --color-chart-5: var(--chart-5);
-    --color-chart-4: var(--chart-4);
-    --color-chart-3: var(--chart-3);
-    --color-chart-2: var(--chart-2);
-    --color-chart-1: var(--chart-1);
-    --color-ring: var(--ring);
-    --color-input: var(--input);
-    --color-border: var(--border);
-    --color-destructive: var(--destructive);
-    --color-accent-foreground: var(--accent-foreground);
-    --color-accent: var(--accent);
-    --color-muted-foreground: var(--muted-foreground);
-    --color-muted: var(--muted);
-    --color-secondary-foreground: var(--secondary-foreground);
-    --color-secondary: var(--secondary);
-    --color-primary-foreground: var(--primary-foreground);
-    --color-primary: var(--primary);
-    --color-popover-foreground: var(--popover-foreground);
-    --color-popover: var(--popover);
-    --color-card-foreground: var(--card-foreground);
-    --color-card: var(--card);
-    --color-foreground: var(--foreground);
-    --color-background: var(--background);
-    --radius-sm: calc(var(--radius) * 0.6);
-    --radius-md: calc(var(--radius) * 0.8);
-    --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) * 1.4);
-    --radius-2xl: calc(var(--radius) * 1.8);
-    --radius-3xl: calc(var(--radius) * 2.2);
-    --radius-4xl: calc(var(--radius) * 2.6);
-}
+    /* Fonts */
+    --font-display: var(--sf-font-display);
+    --font-sans:    var(--sf-font-body);
+    --font-body:    var(--sf-font-body);
+    --font-data:    var(--sf-font-data);
+    --font-mono:    var(--sf-font-mono);
 
-:root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
-}
+    /* Type scale */
+    --text-xs:   var(--sf-text-xs);
+    --text-sm:   var(--sf-text-sm);
+    --text-base: var(--sf-text-base);
+    --text-md:   var(--sf-text-md);
+    --text-lg:   var(--sf-text-lg);
+    --text-xl:   var(--sf-text-xl);
+    --text-2xl:  var(--sf-text-2xl);
+    --text-3xl:  var(--sf-text-3xl);
+    --text-4xl:  var(--sf-text-4xl);
+    --text-hero: var(--sf-text-hero);
 
-.dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    /* Tracking */
+    --tracking-tight:  var(--sf-ls-tight);
+    --tracking-normal: var(--sf-ls-normal);
+    --tracking-wide:   var(--sf-ls-wide);
+    --tracking-caps:   var(--sf-ls-caps);
+
+    /* Radii */
+    --radius-xs:  var(--sf-r-xs);
+    --radius-sm:  var(--sf-r-sm);
+    --radius-md:  var(--sf-r-md);
+    --radius-lg:  var(--sf-r-lg);
+    --radius-xl:  var(--sf-r-xl);
+    --radius-2xl: var(--sf-r-2xl);
+    --radius-full: var(--sf-r-pill);
+
+    /* Shadows */
+    --shadow-xs: var(--sf-shadow-xs);
+    --shadow-sm: var(--sf-shadow-sm);
+    --shadow-md: var(--sf-shadow-md);
+    --shadow-lg: var(--sf-shadow-lg);
+    --shadow-xl: var(--sf-shadow-xl);
+    --inset-shadow-sm: var(--sf-shadow-inset);
+
+    /* Leaf palette */
+    --color-leaf-50:  var(--sf-leaf-50);
+    --color-leaf-100: var(--sf-leaf-100);
+    --color-leaf-200: var(--sf-leaf-200);
+    --color-leaf-300: var(--sf-leaf-300);
+    --color-leaf-400: var(--sf-leaf-400);
+    --color-leaf-500: var(--sf-leaf-500);
+    --color-leaf-600: var(--sf-leaf-600);
+    --color-leaf-700: var(--sf-leaf-700);
+    --color-leaf-800: var(--sf-leaf-800);
+    --color-leaf-900: var(--sf-leaf-900);
+
+    /* Sand palette */
+    --color-sand-50:  var(--sf-sand-50);
+    --color-sand-100: var(--sf-sand-100);
+    --color-sand-200: var(--sf-sand-200);
+    --color-sand-300: var(--sf-sand-300);
+    --color-sand-400: var(--sf-sand-400);
+    --color-sand-500: var(--sf-sand-500);
+    --color-sand-600: var(--sf-sand-600);
+    --color-sand-700: var(--sf-sand-700);
+    --color-sand-800: var(--sf-sand-800);
+    --color-sand-900: var(--sf-sand-900);
+
+    /* Clay palette */
+    --color-clay-50:  var(--sf-clay-50);
+    --color-clay-100: var(--sf-clay-100);
+    --color-clay-200: var(--sf-clay-200);
+    --color-clay-300: var(--sf-clay-300);
+    --color-clay-400: var(--sf-clay-400);
+    --color-clay-500: var(--sf-clay-500);
+    --color-clay-600: var(--sf-clay-600);
+
+    /* Semantic status */
+    --color-ok-bg:     var(--sf-ok-bg);
+    --color-ok-fg:     var(--sf-ok-fg);
+    --color-ok-dot:    var(--sf-ok-dot);
+    --color-warn-bg:   var(--sf-warn-bg);
+    --color-warn-fg:   var(--sf-warn-fg);
+    --color-warn-dot:  var(--sf-warn-dot);
+    --color-alert-bg:  var(--sf-alert-bg);
+    --color-alert-fg:  var(--sf-alert-fg);
+    --color-alert-dot: var(--sf-alert-dot);
+    --color-info-bg:   var(--sf-info-bg);
+    --color-info-fg:   var(--sf-info-fg);
+    --color-info-dot:  var(--sf-info-dot);
+
+    /* Sensor channels */
+    --color-ch-soil-temp:  var(--sf-ch-soil-temp);
+    --color-ch-soil-moist: var(--sf-ch-soil-moist);
+    --color-ch-air-humid:  var(--sf-ch-air-humid);
+    --color-ch-light:      var(--sf-ch-light);
+    --color-ch-air-temp:   var(--sf-ch-air-temp);
+    --color-ch-battery:    var(--sf-leaf-600);
+
+    /* Semantic aliases */
+    --color-bg:            var(--sf-bg);
+    --color-bg-raised:     var(--sf-bg-raised);
+    --color-bg-sunken:     var(--sf-bg-sunken);
+    --color-bg-inset:      var(--sf-bg-inset);
+    --color-fg:            var(--sf-fg);
+    --color-fg-muted:      var(--sf-fg-muted);
+    --color-fg-subtle:     var(--sf-fg-subtle);
+    --color-fg-faint:      var(--sf-fg-faint);
+    --color-fg-onbrand:    var(--sf-fg-onbrand);
+    --color-border:        var(--sf-border);
+    --color-border-strong: var(--sf-border-strong);
+    --color-brand:         var(--sf-brand);
+    --color-brand-hover:   var(--sf-brand-hover);
+    --color-brand-active:  var(--sf-brand-active);
+
+    /* shadcn compat — any shadcn component added later resolves to SmartFarm */
+    --color-background:           var(--sf-sand-50);
+    --color-foreground:           var(--sf-sand-900);
+    --color-card:                 #ffffff;
+    --color-card-foreground:      var(--sf-sand-900);
+    --color-popover:              #ffffff;
+    --color-popover-foreground:   var(--sf-sand-900);
+    --color-primary:              var(--sf-leaf-600);
+    --color-primary-foreground:   #ffffff;
+    --color-secondary:            #ffffff;
+    --color-secondary-foreground: var(--sf-sand-900);
+    --color-muted:                var(--sf-sand-100);
+    --color-muted-foreground:     var(--sf-sand-600);
+    --color-accent:               var(--sf-leaf-50);
+    --color-accent-foreground:    var(--sf-leaf-700);
+    --color-destructive:          var(--sf-alert-dot);
+    --color-input:                var(--sf-sand-200);
+    --color-ring:                 var(--sf-leaf-600);
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
+    * {
+        @apply border-border;
     }
-  body {
-    @apply bg-background text-foreground;
+    html {
+        font-family: var(--sf-font-body);
     }
-  html {
-    @apply font-sans;
+    body {
+        background: var(--sf-bg);
+        color: var(--sf-fg);
     }
 }
