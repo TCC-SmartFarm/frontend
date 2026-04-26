@@ -1,7 +1,16 @@
-export const BatteryPage = () => {
-  return (
-    <div className="flex h-full items-center justify-center">
-      <h1 className="text-2xl font-semibold text-foreground">Bateria</h1>
-    </div>
-  );
-};
+import { Battery } from 'lucide-react'
+import { ParameterPageLayout } from '@/shared/ui/parameter-page-layout'
+import type { ParamConfig } from '@/shared/ui/parameter-page-layout'
+
+const config: ParamConfig = {
+  paramKey: 'battery',
+  label: 'Bateria',
+  unit: '%',
+  icon: Battery,
+  color: '#456830',
+  idealMin: 20,
+  idealMax: 100,
+  formatValue: (v) => Math.round(v).toString(),
+}
+
+export const BatteryPage = () => <ParameterPageLayout config={config} />

@@ -1,40 +1,45 @@
-import { useNavigate } from "react-router-dom";
-import { useAuth0 } from "@auth0/auth0-react";
-import { ROUTES } from "@/shared/constants/routes";
+import { useNavigate } from 'react-router-dom'
+import { useAuth0 } from '@auth0/auth0-react'
+import { ROUTES } from '@/shared/constants/routes'
+import { HeroSection } from './HeroSection'
+import { LandscapeBand } from './LandscapeBand'
+import { StatsRow } from './StatsRow'
+import { ProblemSolution } from './ProblemSolution'
+import { HowItWorks } from './HowItWorks'
+import { WhatYouMonitor } from './WhatYouMonitor'
+import { CommunityBand } from './CommunityBand'
+import { NextGenSolutions } from './NextGenSolutions'
+import { SustainableCard } from './SustainableCard'
+import { PricingSection } from './PricingSection'
+import { JoinCTA } from './JoinCTA'
+import { LandingFooter } from './LandingFooter'
 
 export const LandingPage = () => {
-  const { loginWithRedirect, isAuthenticated, isLoading, error } = useAuth0();
-  const navigate = useNavigate();
+  const { loginWithRedirect, isAuthenticated, isLoading, error } = useAuth0()
+  const navigate = useNavigate()
 
   const handleLogin = () => {
     if (isAuthenticated) {
-      navigate(ROUTES.DASHBOARD);
+      navigate(ROUTES.DASHBOARD)
     } else {
-      loginWithRedirect({ appState: { returnTo: ROUTES.DASHBOARD } });
+      loginWithRedirect({ appState: { returnTo: ROUTES.DASHBOARD } })
     }
-  };
+  }
 
   return (
-    <div className="flex h-screen flex-col">
-      <header className="flex h-14 items-center justify-between border-b border-border bg-background px-6">
-        <span className="text-lg font-bold text-foreground">SmartFarm</span>
-        <button
-          onClick={handleLogin}
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/80 transition-colors"
-        >
-          Entrar
-        </button>
-      </header>
-      <main className="flex flex-1 flex-col items-center justify-center gap-4">
-        <h1 className="text-2xl font-semibold text-foreground">Landing Page</h1>
-        {isLoading && <p className="text-sm text-muted-foreground">Auth0 carregando...</p>}
-        {error && (
-          <div className="rounded-lg border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
-            <p className="font-medium">Erro Auth0:</p>
-            <p>{error.message}</p>
-          </div>
-        )}
-      </main>
+    <div className="min-h-screen" style={{ background: '#f3eee5', color: 'var(--sf-fg)', fontFamily: 'var(--sf-font-display)' }}>
+      <HeroSection onLogin={handleLogin} isLoading={isLoading} error={error} />
+      <LandscapeBand />
+      <StatsRow />
+      <ProblemSolution />
+      <HowItWorks />
+      <WhatYouMonitor />
+      <CommunityBand />
+      <NextGenSolutions />
+      <SustainableCard />
+      <PricingSection onGetStarted={handleLogin} />
+      <JoinCTA onLogin={handleLogin} />
+      <LandingFooter />
     </div>
-  );
-};
+  )
+}

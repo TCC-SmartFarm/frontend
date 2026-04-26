@@ -1,7 +1,16 @@
-export const AirTempPage = () => {
-  return (
-    <div className="flex h-full items-center justify-center">
-      <h1 className="text-2xl font-semibold text-foreground">Temperatura do Ar</h1>
-    </div>
-  );
-};
+import { Wind } from 'lucide-react'
+import { ParameterPageLayout } from '@/shared/ui/parameter-page-layout'
+import type { ParamConfig } from '@/shared/ui/parameter-page-layout'
+
+const config: ParamConfig = {
+  paramKey: 'airTemp',
+  label: 'Temperatura do Ar',
+  unit: '°C',
+  icon: Wind,
+  color: '#a14a2e',
+  idealMin: 15,
+  idealMax: 35,
+  formatValue: (v) => v.toFixed(1),
+}
+
+export const AirTempPage = () => <ParameterPageLayout config={config} />
