@@ -47,10 +47,6 @@ export const DashboardMapPage = () => {
   const [activeView, setActiveView] = useState<string>('Status')
 
   const onlineSensors = SENSORS.length
-  const alertCount = SENSORS.filter(s => {
-    const r = READINGS[s.id]
-    return statusFor('battery', r.battery) !== 'ok' || statusFor('soilMoist', r.soilMoist) !== 'ok'
-  }).length
 
   const selected = SENSORS.find(s => s.id === selectedId) ?? SENSORS[0]
   const selR = READINGS[selected.id]
