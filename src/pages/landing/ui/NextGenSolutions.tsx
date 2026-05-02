@@ -4,7 +4,7 @@ import AutomaticImage from "@/assets/automatic.jpg";
 const cards = [
   {
     title: "Acompanhe a lavoura",
-    body: "Solo, ar, luz e bateria — tudo num só painel.",
+    body: "Solo, ar, luz e bateria — tudo em um só painel.",
     illust: "monitor" as const,
   },
   {
@@ -14,7 +14,7 @@ const cards = [
   },
   {
     title: "Decisões automáticas",
-    body: "Avisos certeiros: regue agora, espere até amanhã.",
+    body: "Avisos certeiros.",
     illust: "auto" as const,
   },
 ];
