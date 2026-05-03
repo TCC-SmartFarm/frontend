@@ -12,6 +12,7 @@ export interface SensorThresholds {
 export interface Sensor {
   id: string;
   name: string;
+  nickname: string;
   latitude: number;
   longitude: number;
   thresholds: SensorThresholds;

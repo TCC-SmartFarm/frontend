@@ -11,6 +11,7 @@ import { LuminosityPage } from "@/pages/luminosity/ui/LuminosityPage";
 import { AirTempPage } from "@/pages/air-temp/ui/AirTempPage";
 import { BatteryPage } from "@/pages/battery/ui/BatteryPage";
 import { SettingsPage } from "@/pages/settings/ui/SettingsPage";
+import { SensorDetailPage } from "@/pages/sensor-detail/ui/SensorDetailPage";
 import { NotFoundPage } from "@/pages/not-found/ui/NotFoundPage";
 
 export const AppRoutes = () => {
@@ -28,6 +29,7 @@ export const AppRoutes = () => {
           <Route path={ROUTES.DASHBOARD_AIR_TEMP} element={<AirTempPage />} />
           <Route path={ROUTES.DASHBOARD_BATTERY} element={<BatteryPage />} />
           <Route path={ROUTES.DASHBOARD_SETTINGS} element={<SettingsPage />} />
+          <Route path={ROUTES.DASHBOARD_SENSOR} element={<SensorDetailPage />} />
         </Route>
       </Route>
       <Route path="*" element={<NotFoundPage />} />

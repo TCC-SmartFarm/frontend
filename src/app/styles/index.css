@@ -136,6 +136,12 @@
     --color-ring:                 var(--sf-leaf-600);
 }
 
+/* Tailwind's preflight sets max-width: 100% on all images, which shrinks
+   Leaflet tiles to their containing tile div and makes them invisible. */
+.leaflet-container img {
+  max-width: none !important;
+}
+
 @layer base {
     * {
         @apply border-border;

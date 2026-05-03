@@ -207,7 +207,7 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-.sf-h1, h1 {
+.sf-h1 {
   font-family: var(--sf-font-display);
   font-size: var(--sf-text-4xl);
   line-height: var(--sf-lh-tight);
@@ -216,7 +216,7 @@ html, body {
   color: var(--sf-fg);
 }
 
-.sf-h2, h2 {
+.sf-h2 {
   font-family: var(--sf-font-display);
   font-size: var(--sf-text-3xl);
   line-height: var(--sf-lh-snug);
@@ -225,7 +225,7 @@ html, body {
   color: var(--sf-fg);
 }
 
-.sf-h3, h3 {
+.sf-h3 {
   font-family: var(--sf-font-display);
   font-size: var(--sf-text-2xl);
   line-height: var(--sf-lh-snug);
@@ -233,7 +233,7 @@ html, body {
   color: var(--sf-fg);
 }
 
-.sf-h4, h4 {
+.sf-h4 {
   font-family: var(--sf-font-display);
   font-size: var(--sf-text-xl);
   line-height: var(--sf-lh-snug);

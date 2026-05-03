@@ -11,4 +11,5 @@ export const ROUTES = {
   DASHBOARD_AIR_TEMP: "/dashboard/air-temp",
   DASHBOARD_BATTERY: "/dashboard/battery",
   DASHBOARD_SETTINGS: "/dashboard/settings",
+  DASHBOARD_SENSOR: "/dashboard/sensor/:id",
 } as const;

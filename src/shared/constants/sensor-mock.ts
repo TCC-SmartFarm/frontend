@@ -1,12 +1,15 @@
 export interface Sensor {
   id: string
   name: string
+  nickname: string
   crop: string
   planted: string
   depth: string
   battery: number
   signal: 'Forte' | 'Médio' | 'Fraco'
   serial: string
+  latitude: number
+  longitude: number
 }
 
 export type ParamKey = 'soilTemp' | 'soilMoist' | 'airHumid' | 'airTemp' | 'light' | 'battery'
@@ -14,16 +17,16 @@ export type ParamKey = 'soilTemp' | 'soilMoist' | 'airHumid' | 'airTemp' | 'ligh
 export type Readings = Record<ParamKey, number>
 
 export const SENSORS: Sensor[] = [
-  { id: 'MN-01', name: 'Milho Norte',  crop: 'Milho',      planted: 'Mar 2026', depth: '15 cm', battery: 87, signal: 'Forte', serial: 'SF-MN01' },
-  { id: 'MS-01', name: 'Milho Sul',    crop: 'Milho',      planted: 'Mar 2026', depth: '15 cm', battery: 72, signal: 'Forte', serial: 'SF-MS01' },
-  { id: 'SJ-01', name: 'Soja Leste',   crop: 'Soja',       planted: 'Fev 2026', depth: '20 cm', battery: 55, signal: 'Médio', serial: 'SF-SJ01' },
-  { id: 'SJ-02', name: 'Soja Oeste',   crop: 'Soja',       planted: 'Fev 2026', depth: '20 cm', battery: 31, signal: 'Fraco', serial: 'SF-SJ02' },
-  { id: 'CF-01', name: 'Café Alto',    crop: 'Café',       planted: 'Jan 2025', depth: '25 cm', battery: 93, signal: 'Forte', serial: 'SF-CF01' },
-  { id: 'CF-02', name: 'Café Baixo',   crop: 'Café',       planted: 'Jan 2025', depth: '25 cm', battery: 18, signal: 'Médio', serial: 'SF-CF02' },
-  { id: 'HT-01', name: 'Horta A',      crop: 'Hortaliças', planted: 'Abr 2026', depth: '10 cm', battery: 65, signal: 'Forte', serial: 'SF-HT01' },
-  { id: 'HT-02', name: 'Horta B',      crop: 'Hortaliças', planted: 'Abr 2026', depth: '10 cm', battery: 78, signal: 'Forte', serial: 'SF-HT02' },
-  { id: 'PS-01', name: 'Pasto Fundo',  crop: 'Pasto',      planted: '—',        depth: '15 cm', battery: 44, signal: 'Médio', serial: 'SF-PS01' },
-  { id: 'FJ-01', name: 'Feijão',       crop: 'Feijão',     planted: 'Mar 2026', depth: '15 cm', battery: 61, signal: 'Forte', serial: 'SF-FJ01' },
+  { id: 'MN-01', name: 'Milho Norte',  nickname: 'Sector Norte A', crop: 'Milho',      planted: 'Mar 2026', depth: '15 cm', battery: 87, signal: 'Forte', serial: 'SF-MN01', latitude: -22.895, longitude: -47.055 },
+  { id: 'MS-01', name: 'Milho Sul',    nickname: 'Sector Sul B',   crop: 'Milho',      planted: 'Mar 2026', depth: '15 cm', battery: 72, signal: 'Forte', serial: 'SF-MS01', latitude: -22.905, longitude: -47.060 },
+  { id: 'SJ-01', name: 'Soja Leste',   nickname: 'Parcela Leste',  crop: 'Soja',       planted: 'Fev 2026', depth: '20 cm', battery: 55, signal: 'Médio', serial: 'SF-SJ01', latitude: -22.892, longitude: -47.043 },
+  { id: 'SJ-02', name: 'Soja Oeste',   nickname: 'Parcela Oeste',  crop: 'Soja',       planted: 'Fev 2026', depth: '20 cm', battery: 31, signal: 'Fraco', serial: 'SF-SJ02', latitude: -22.890, longitude: -47.048 },
+  { id: 'CF-01', name: 'Café Alto',    nickname: 'Encosta Alta',   crop: 'Café',       planted: 'Jan 2025', depth: '25 cm', battery: 93, signal: 'Forte', serial: 'SF-CF01', latitude: -22.898, longitude: -47.040 },
+  { id: 'CF-02', name: 'Café Baixo',   nickname: 'Vale do Café',   crop: 'Café',       planted: 'Jan 2025', depth: '25 cm', battery: 18, signal: 'Médio', serial: 'SF-CF02', latitude: -22.902, longitude: -47.058 },
+  { id: 'HT-01', name: 'Horta A',      nickname: 'Canteiro 1',     crop: 'Hortaliças', planted: 'Abr 2026', depth: '10 cm', battery: 65, signal: 'Forte', serial: 'SF-HT01', latitude: -22.908, longitude: -47.052 },
+  { id: 'HT-02', name: 'Horta B',      nickname: 'Canteiro 2',     crop: 'Hortaliças', planted: 'Abr 2026', depth: '10 cm', battery: 78, signal: 'Forte', serial: 'SF-HT02', latitude: -22.910, longitude: -47.045 },
+  { id: 'PS-01', name: 'Pasto Fundo',  nickname: 'Pasto Fundo',    crop: 'Pasto',      planted: '—',        depth: '15 cm', battery: 44, signal: 'Médio', serial: 'SF-PS01', latitude: -22.893, longitude: -47.065 },
+  { id: 'FJ-01', name: 'Feijão',       nickname: 'Talhão Feijão',  crop: 'Feijão',     planted: 'Mar 2026', depth: '15 cm', battery: 61, signal: 'Forte', serial: 'SF-FJ01', latitude: -22.915, longitude: -47.050 },
 ]
 
 export const READINGS: Record<string, Readings> = {
