@@ -3,7 +3,7 @@ import { ParameterPageLayout } from '@/shared/ui/parameter-page-layout'
 import type { ParamConfig } from '@/shared/ui/parameter-page-layout'
 
 const config: ParamConfig = {
-  paramKey: 'soilMoist',
+  paramKey: 'soil_moisture',
   label: 'Umidade do Solo',
   unit: '%',
   icon: Droplets,

@@ -3,7 +3,7 @@ import { ParameterPageLayout } from '@/shared/ui/parameter-page-layout'
 import type { ParamConfig } from '@/shared/ui/parameter-page-layout'
 
 const config: ParamConfig = {
-  paramKey: 'airHumid',
+  paramKey: 'air_humidity',
   label: 'Umidade do Ar',
   unit: '%',
   icon: CloudRain,

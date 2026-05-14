@@ -9,13 +9,24 @@ export interface SensorThresholds {
   battery_low?: number;
 }
 
+export interface SensorPayload {
+  soil_temperature: number;
+  soil_moisture: number;
+  air_humidity: number;
+  luminosity: number;
+  air_temperature: number;
+  battery: number;
+}
+
 export interface Sensor {
   id: string;
+  deviceId: string;
   name: string;
   nickname: string;
-  latitude: number;
-  longitude: number;
+  deviceType?: string;
+  latitude: number | null;
+  longitude: number | null;
   thresholds: SensorThresholds;
-  created_at: string;
-  updated_at: string;
+  lastReading?: Partial<SensorPayload>;
+  lastReadingAt?: number;
 }

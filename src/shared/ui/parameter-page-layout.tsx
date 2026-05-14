@@ -1,7 +1,5 @@
-import { useState, useMemo } from 'react'
-import type { ReactNode } from 'react'
+import { useMemo } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { Battery, Wifi } from 'lucide-react'
 import {
   LineChart,
   Line,
@@ -13,18 +11,27 @@ import {
 } from 'recharts'
 import { Badge } from './badge'
 import { Card } from './card'
-import { cn } from '../lib/utils'
-import {
-  SENSORS,
-  READINGS,
-  seriesFor,
-  statusFor,
-  statusLabel,
-  type ParamKey,
-} from '../constants/sensor-mock'
+import { ChartSkeleton } from './chart-skeleton'
+import { KpiCardsSkeleton } from './kpi-skeleton'
+import { EmptyState } from './empty-state'
+import { ErrorState } from './error-state'
+import { resolveErrorVariant } from './error-state.helpers'
+import { cn } from '@/shared/lib/utils'
+import { useSensorsList } from '@/entities/sensor/api/use-sensors-list'
+import { useSensorHistory } from '@/entities/reading/api/use-sensor-history'
+import { useEnsureHistoryCoverage } from '@/entities/reading/api/use-ensure-history-coverage'
+import { detectCoverage } from '@/entities/reading/lib/detect-coverage'
+import { useSelectedSensorStore } from '@/shared/stores/selected-sensor-store'
+import { usePeriodStore } from '@/shared/stores/period-store'
+import { periodToDays, periodLabel } from '@/shared/lib/period'
+import { useDataAvailabilityToast } from '@/shared/lib/toast'
+import { statusForParam, statusLabel as toStatusLabel } from '@/shared/constants/thresholds'
+import { PeriodSelector } from '@/features/period-selector/ui/PeriodSelector'
+import { SensorSelector } from '@/features/sensor-selector/ui/SensorSelector'
+import type { SensorParam } from '@/entities/reading/model/types'
 
 export interface ParamConfig {
-  paramKey: ParamKey
+  paramKey: SensorParam
   label: string
   unit: string
   icon: LucideIcon
@@ -34,28 +41,72 @@ export interface ParamConfig {
   formatValue?: (v: number) => string
 }
 
+interface ChartPoint {
+  time: string
+  value: number
+  ts: number
+}
+
+const formatTimeLabel = (timestampSec: number, days: number): string => {
+  const date = new Date(timestampSec * 1000)
+  if (days <= 1) {
+    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  }
+  if (days <= 31) {
+    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+  }
+  return date.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })
+}
+
 export const ParameterPageLayout = ({ config }: { config: ParamConfig }) => {
   const { paramKey, label, unit, icon: Icon, color, idealMin, idealMax, formatValue } = config
   const fmt = formatValue ?? ((v: number) => String(v))
 
-  const [sensorId, setSensorId] = useState(SENSORS[0].id)
-  const [range, setRange] = useState('24h')
+  const sensorsQuery = useSensorsList()
+  const sensors = sensorsQuery.data ?? []
+  const selectedId = useSelectedSensorStore((s) => s.selectedSensorId)
+  const setSelectedId = useSelectedSensorStore((s) => s.setSelectedSensorId)
+  const period = usePeriodStore((s) => s.period)
+  const setPeriod = usePeriodStore((s) => s.setPeriod)
+  const days = periodToDays(period)
 
-  const sensor = SENSORS.find((s) => s.id === sensorId) ?? SENSORS[0]
-  const currentValue = READINGS[sensor.id]?.[paramKey] ?? 0
-  const status = statusFor(paramKey, currentValue)
-  const series = useMemo(() => seriesFor(paramKey, sensor.id, range), [paramKey, sensor.id, range])
+  useEnsureHistoryCoverage(selectedId, days)
+  const historyQuery = useSensorHistory(selectedId, days)
+  const readings = useMemo(() => historyQuery.data ?? [], [historyQuery.data])
+
+  const coverage = useMemo(() => detectCoverage(readings, days), [readings, days])
+  useDataAvailabilityToast(days, readings.length > 0 ? coverage.actualDays : undefined, selectedId)
+
+  const series: ChartPoint[] = useMemo(() => {
+    return readings
+      .map((r) => {
+        const value = r.value[paramKey]
+        return value !== null && value !== undefined
+          ? { time: formatTimeLabel(r.timestamp, days), value, ts: r.timestamp }
+          : null
+      })
+      .filter((p): p is ChartPoint => p !== null)
+  }, [readings, paramKey, days])
 
   const seriesValues = series.map((p) => p.value)
-  const minVal = Math.min(...seriesValues).toFixed(1)
-  const maxVal = Math.max(...seriesValues).toFixed(1)
+  const currentValue = seriesValues.length > 0 ? seriesValues[seriesValues.length - 1] : null
+  const minVal = seriesValues.length > 0 ? Math.min(...seriesValues) : null
+  const maxVal = seriesValues.length > 0 ? Math.max(...seriesValues) : null
+  const avgVal =
+    seriesValues.length > 0 ? seriesValues.reduce((a, b) => a + b, 0) / seriesValues.length : null
 
+  const status = statusForParam(paramKey, currentValue)
   const statusTone = status === 'ok' ? 'ok' : status === 'warn' ? 'warn' : 'alert'
-  const otherSensors = SENSORS.filter((s) => s.id !== sensor.id).slice(0, 6)
+
+  const selected = sensors.find((s) => s.deviceId === selectedId) ?? null
+  const otherSensors = sensors.filter((s) => s.deviceId !== selectedId).slice(0, 6)
+
+  const isSensorsLoading = sensorsQuery.isPending
+  const isHistoryLoading = !!selectedId && historyQuery.isPending && !historyQuery.data
+  const tickInterval = series.length > 6 ? Math.floor(series.length / 6) : 0
 
   return (
     <div className="flex flex-col gap-6 p-8" style={{ maxWidth: 1240 }}>
-      {/* Page header */}
       <div>
         <div className="mb-2 flex items-center gap-2 text-fg-subtle">
           <div
@@ -77,184 +128,253 @@ export const ParameterPageLayout = ({ config }: { config: ParamConfig }) => {
         </p>
       </div>
 
-      {/* Sensor selector */}
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="text-xs font-semibold uppercase tracking-caps text-fg-subtle">Sensor</span>
-        <div className="flex flex-wrap gap-2">
-          {SENSORS.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => setSensorId(s.id)}
-              className={cn(
-                'rounded-full px-3 py-1.5 font-display text-sm font-semibold transition-all',
-                s.id === sensorId
-                  ? 'bg-leaf-600 text-white shadow-xs'
-                  : 'border border-border bg-bg-raised text-fg-muted hover:border-leaf-600 hover:text-fg',
-              )}
-            >
-              {s.name}
-            </button>
-          ))}
-        </div>
-      </div>
+      {sensorsQuery.error ? (
+        <ErrorState
+          variant={resolveErrorVariant(sensorsQuery.error)}
+          onRetry={() => sensorsQuery.refetch()}
+        />
+      ) : isSensorsLoading ? (
+        <KpiCardsSkeleton count={4} />
+      ) : sensors.length === 0 ? (
+        <EmptyState variant="no-sensors" />
+      ) : (
+        <>
+          <SensorSelector
+            sensors={sensors}
+            value={selectedId}
+            onChange={setSelectedId}
+          />
 
-      {/* Hero grid */}
-      <div className="grid gap-4" style={{ gridTemplateColumns: '1.3fr 1fr' }}>
-        {/* Current reading card */}
-        <Card tone="white" padding="none" className="p-7">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-caps text-fg-subtle">
-              Leitura atual · {sensor.name}
-            </span>
-            <Badge tone="leaf" dot>Online</Badge>
-          </div>
-          <div
-            className="font-data leading-[0.92] tracking-[-0.03em] text-fg tabular-nums"
-            style={{ fontSize: 'clamp(56px,6vw,104px)' }}
-          >
-            {fmt(currentValue)}
-            <span className="ml-2 font-sans text-3xl font-medium text-fg-muted">{unit}</span>
-          </div>
-          <div className="mt-4">
-            <Badge tone={statusTone} dot>{statusLabel(status)}</Badge>
-          </div>
-          <div className="mt-5 grid grid-cols-3 gap-3 border-t border-border pt-4">
-            <MiniStat label={`Mínima (${range})`} value={minVal} unit={unit} />
-            <MiniStat label={`Máxima (${range})`} value={maxVal} unit={unit} />
-            <MiniStat label="Faixa ideal" value={`${idealMin}–${idealMax}`} unit={unit} />
-          </div>
-        </Card>
+          {selected && (
+            <>
+              <div className="grid gap-4" style={{ gridTemplateColumns: '1.3fr 1fr' }}>
+                <Card tone="white" padding="none" className="p-7">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase tracking-caps text-fg-subtle">
+                      Leitura atual · {selected.name}
+                    </span>
+                    {selected.lastReadingAt && (
+                      <Badge tone="leaf" dot>
+                        {new Date(selected.lastReadingAt * 1000).toLocaleString('pt-BR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </Badge>
+                    )}
+                  </div>
+                  {isHistoryLoading ? (
+                    <div className="h-[120px] animate-pulse rounded-md bg-sand-200/70" />
+                  ) : currentValue === null ? (
+                    <div
+                      className="font-data leading-[0.92] tracking-[-0.03em] text-fg-subtle tabular-nums"
+                      style={{ fontSize: 'clamp(56px,6vw,104px)' }}
+                    >
+                      —<span className="ml-2 font-sans text-3xl font-medium text-fg-muted">{unit}</span>
+                    </div>
+                  ) : (
+                    <div
+                      className="font-data leading-[0.92] tracking-[-0.03em] text-fg tabular-nums"
+                      style={{ fontSize: 'clamp(56px,6vw,104px)' }}
+                    >
+                      {fmt(currentValue)}
+                      <span className="ml-2 font-sans text-3xl font-medium text-fg-muted">{unit}</span>
+                    </div>
+                  )}
+                  {currentValue !== null && (
+                    <div className="mt-4">
+                      <Badge tone={statusTone} dot>
+                        {toStatusLabel(status)}
+                      </Badge>
+                    </div>
+                  )}
+                  <div className="mt-5 grid grid-cols-3 gap-3 border-t border-border pt-4">
+                    <MiniStat
+                      label={`Mínima (${periodLabel(period).toLowerCase()})`}
+                      value={minVal !== null ? fmt(minVal) : '—'}
+                      unit={unit}
+                    />
+                    <MiniStat
+                      label={`Máxima (${periodLabel(period).toLowerCase()})`}
+                      value={maxVal !== null ? fmt(maxVal) : '—'}
+                      unit={unit}
+                    />
+                    <MiniStat
+                      label="Média"
+                      value={avgVal !== null ? fmt(avgVal) : '—'}
+                      unit={unit}
+                    />
+                  </div>
+                </Card>
 
-        {/* Sensor info card */}
-        <Card tone="white" padding="none" className="p-6">
-          <h3 className="mb-4 font-display text-base font-semibold text-fg">Sobre este sensor</h3>
-          <div className="flex flex-col gap-3 text-sm">
-            <InfoRow label="Talhão"><span className="font-semibold">{sensor.name}</span></InfoRow>
-            <InfoRow label="Cultivo"><Badge tone="leaf" size="sm">{sensor.crop}</Badge></InfoRow>
-            <InfoRow label="Plantado em">{sensor.planted}</InfoRow>
-            <InfoRow label="Profundidade">{sensor.depth}</InfoRow>
-            <InfoRow label="Bateria">
-              <span className="inline-flex items-center gap-1.5 font-semibold">
-                <Battery
-                  size={14}
-                  strokeWidth={1.75}
-                  aria-hidden
-                  className={sensor.battery < 25 ? 'text-alert-dot' : 'text-leaf-700'}
-                />
-                {sensor.battery}%
-              </span>
-            </InfoRow>
-            <InfoRow label="Sinal">
-              <span className="inline-flex items-center gap-1.5 font-semibold">
-                <Wifi size={14} strokeWidth={1.75} aria-hidden className="text-leaf-700" />
-                {sensor.signal}
-              </span>
-            </InfoRow>
-            <InfoRow label="Código">
-              <span className="font-mono text-xs">{sensor.serial}</span>
-            </InfoRow>
-          </div>
-        </Card>
-      </div>
+                <Card tone="white" padding="none" className="p-6">
+                  <h3 className="mb-4 font-display text-base font-semibold text-fg">Sobre este sensor</h3>
+                  <div className="flex flex-col gap-3 text-sm">
+                    <InfoRow label="Identificação">
+                      <span className="font-mono text-xs">{selected.deviceId}</span>
+                    </InfoRow>
+                    {selected.deviceType && (
+                      <InfoRow label="Tipo">
+                        <Badge tone="leaf" size="sm">
+                          {selected.deviceType}
+                        </Badge>
+                      </InfoRow>
+                    )}
+                    <InfoRow label="Localização">
+                      {selected.latitude !== null && selected.longitude !== null ? (
+                        <span className="font-mono text-xs">
+                          {selected.latitude.toFixed(4)}, {selected.longitude.toFixed(4)}
+                        </span>
+                      ) : (
+                        <span className="text-fg-subtle">Sem dados</span>
+                      )}
+                    </InfoRow>
+                    <InfoRow label="Bateria">
+                      {typeof selected.lastReading?.battery === 'number' ? (
+                        <span className="inline-flex items-center gap-1.5 font-semibold">
+                          {Math.round(selected.lastReading.battery)}%
+                        </span>
+                      ) : (
+                        <span className="text-fg-subtle">Sem dados</span>
+                      )}
+                    </InfoRow>
+                    <InfoRow label="Última leitura">
+                      {selected.lastReadingAt ? (
+                        new Date(selected.lastReadingAt * 1000).toLocaleString('pt-BR')
+                      ) : (
+                        <span className="text-fg-subtle">Sem dados</span>
+                      )}
+                    </InfoRow>
+                  </div>
+                </Card>
+              </div>
 
-      {/* Chart card */}
-      <Card tone="white" padding="none" className="p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h3 className="font-display text-lg font-semibold text-fg">Histórico</h3>
-            <p className="mt-0.5 text-xs text-fg-subtle">Passe o mouse sobre o gráfico para ver valores.</p>
-          </div>
-          <div className="flex gap-1 rounded-[10px] bg-sand-100 p-1">
-            {(['24h', '7 dias', '30 dias'] as const).map((r) => (
-              <button
-                key={r}
-                onClick={() => setRange(r)}
-                className={cn(
-                  'rounded-lg px-3.5 py-1.5 font-display text-sm font-semibold transition-all',
-                  range === r ? 'bg-white text-fg shadow-xs' : 'text-fg-muted hover:text-fg',
+              <Card tone="white" padding="none" className="p-6">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h3 className="font-display text-lg font-semibold text-fg">Histórico</h3>
+                    <p className="mt-0.5 text-xs text-fg-subtle">
+                      Passe o mouse sobre o gráfico para ver valores.
+                    </p>
+                  </div>
+                  <PeriodSelector value={period} onChange={setPeriod} />
+                </div>
+                {historyQuery.error ? (
+                  <ErrorState
+                    variant={resolveErrorVariant(historyQuery.error)}
+                    onRetry={() => historyQuery.refetch()}
+                  />
+                ) : isHistoryLoading ? (
+                  <ChartSkeleton height={280} />
+                ) : series.length === 0 ? (
+                  <EmptyState variant="no-data" />
+                ) : (
+                  <ResponsiveContainer width="100%" height={280}>
+                    <LineChart data={series} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--sf-border)" vertical={false} />
+                      <XAxis
+                        dataKey="time"
+                        tick={{
+                          fontSize: 11,
+                          fill: 'var(--sf-fg-subtle)',
+                          fontFamily: 'var(--sf-font-mono)',
+                        }}
+                        tickLine={false}
+                        axisLine={false}
+                        interval={tickInterval}
+                      />
+                      <YAxis
+                        tick={{
+                          fontSize: 11,
+                          fill: 'var(--sf-fg-subtle)',
+                          fontFamily: 'var(--sf-font-mono)',
+                        }}
+                        tickLine={false}
+                        axisLine={false}
+                        width={48}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          background: '#fff',
+                          border: '1px solid var(--sf-border)',
+                          borderRadius: 10,
+                          boxShadow: 'var(--sf-shadow-sm)',
+                          fontFamily: 'var(--sf-font-display)',
+                          fontSize: 13,
+                        }}
+                        formatter={(value: unknown) => [`${value ?? ''} ${unit}`, label]}
+                        labelStyle={{ color: 'var(--sf-fg-subtle)', fontSize: 11 }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="value"
+                        stroke={color}
+                        strokeWidth={2}
+                        dot={false}
+                        activeDot={{ r: 4, fill: color, stroke: 'none' }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
                 )}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
-        </div>
-        <ResponsiveContainer width="100%" height={280}>
-          <LineChart data={series} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--sf-border)" vertical={false} />
-            <XAxis
-              dataKey="time"
-              tick={{ fontSize: 11, fill: 'var(--sf-fg-subtle)', fontFamily: 'var(--sf-font-mono)' }}
-              tickLine={false}
-              axisLine={false}
-              interval={Math.floor(series.length / 6)}
-            />
-            <YAxis
-              tick={{ fontSize: 11, fill: 'var(--sf-fg-subtle)', fontFamily: 'var(--sf-font-mono)' }}
-              tickLine={false}
-              axisLine={false}
-              width={48}
-            />
-            <Tooltip
-              contentStyle={{
-                background: '#fff',
-                border: '1px solid var(--sf-border)',
-                borderRadius: 10,
-                boxShadow: 'var(--sf-shadow-sm)',
-                fontFamily: 'var(--sf-font-display)',
-                fontSize: 13,
-              }}
-              formatter={(value: unknown) => [`${value ?? ''} ${unit}`, label]}
-              labelStyle={{ color: 'var(--sf-fg-subtle)', fontSize: 11 }}
-            />
-            <Line
-              type="monotone"
-              dataKey="value"
-              stroke={color}
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 4, fill: color, stroke: 'none' }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </Card>
+              </Card>
 
-      {/* Other sensors */}
-      <Card tone="white" padding="none" className="p-6">
-        <h3 className="mb-4 font-display text-lg font-semibold text-fg">
-          {label} nos outros sensores
-        </h3>
-        <div className="grid grid-cols-3 gap-3">
-          {otherSensors.map((s) => {
-            const v = READINGS[s.id]?.[paramKey] ?? 0
-            const st = statusFor(paramKey, v)
-            const dotClass =
-              st === 'ok' ? 'bg-ok-dot' : st === 'warn' ? 'bg-warn-dot' : 'bg-alert-dot'
-            return (
-              <button
-                key={s.id}
-                onClick={() => setSensorId(s.id)}
-                className="flex items-center gap-3 rounded-[10px] border border-border bg-sand-50 px-3.5 py-3 text-left transition-all hover:border-leaf-600 hover:shadow-xs"
-              >
-                <span className={cn('size-2.5 shrink-0 rounded-full', dotClass)} />
-                <div className="min-w-0 flex-1">
-                  <div className="truncate font-display text-sm font-semibold text-fg">{s.name}</div>
-                  <div className="text-xs text-fg-subtle">{s.crop}</div>
-                </div>
-                <div className="shrink-0 font-data text-xl font-semibold tabular-nums text-fg">
-                  {fmt(v)}
-                  <span className="ml-0.5 font-sans text-xs font-medium text-fg-muted">{unit}</span>
-                </div>
-              </button>
-            )
-          })}
-        </div>
-      </Card>
+              {otherSensors.length > 0 && (
+                <Card tone="white" padding="none" className="p-6">
+                  <h3 className="mb-4 font-display text-lg font-semibold text-fg">
+                    {label} nos outros sensores
+                  </h3>
+                  <div className="grid grid-cols-3 gap-3">
+                    {otherSensors.map((s) => {
+                      const value = s.lastReading?.[paramKey] ?? null
+                      const st = statusForParam(paramKey, value)
+                      const dotClass =
+                        st === 'ok' ? 'bg-ok-dot' : st === 'warn' ? 'bg-warn-dot' : 'bg-alert-dot'
+                      return (
+                        <button
+                          key={s.deviceId}
+                          type="button"
+                          onClick={() => setSelectedId(s.deviceId)}
+                          className="flex items-center gap-3 rounded-[10px] border border-border bg-sand-50 px-3.5 py-3 text-left transition-all hover:border-leaf-600 hover:shadow-xs"
+                        >
+                          <span className={cn('size-2.5 shrink-0 rounded-full', dotClass)} />
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate font-display text-sm font-semibold text-fg">
+                              {s.name}
+                            </div>
+                            <div className="truncate font-mono text-[11px] text-fg-subtle">
+                              {s.deviceId}
+                            </div>
+                          </div>
+                          <div className="shrink-0 font-data text-xl font-semibold tabular-nums text-fg">
+                            {value !== null ? fmt(value) : '—'}
+                            <span className="ml-0.5 font-sans text-xs font-medium text-fg-muted">
+                              {unit}
+                            </span>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </Card>
+              )}
+            </>
+          )}
+        </>
+      )}
     </div>
   )
 }
 
-function MiniStat({ label, value, unit }: { label: string; value: string | number; unit: string }) {
+function MiniStat({
+  label,
+  value,
+  unit,
+}: {
+  label: string
+  value: string | number
+  unit: string
+}) {
   return (
     <div>
       <div className="text-xs font-semibold uppercase tracking-caps text-fg-subtle">{label}</div>
@@ -266,7 +386,7 @@ function MiniStat({ label, value, unit }: { label: string; value: string | numbe
   )
 }
 
-function InfoRow({ label, children }: { label: string; children: ReactNode }) {
+function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between">
       <span className="text-fg-subtle">{label}</span>

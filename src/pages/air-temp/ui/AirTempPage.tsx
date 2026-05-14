@@ -3,7 +3,7 @@ import { ParameterPageLayout } from '@/shared/ui/parameter-page-layout'
 import type { ParamConfig } from '@/shared/ui/parameter-page-layout'
 
 const config: ParamConfig = {
-  paramKey: 'airTemp',
+  paramKey: 'air_temperature',
   label: 'Temperatura do Ar',
   unit: '°C',
   icon: Wind,

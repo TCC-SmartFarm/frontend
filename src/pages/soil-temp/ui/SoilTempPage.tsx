@@ -3,7 +3,7 @@ import { ParameterPageLayout } from '@/shared/ui/parameter-page-layout'
 import type { ParamConfig } from '@/shared/ui/parameter-page-layout'
 
 const config: ParamConfig = {
-  paramKey: 'soilTemp',
+  paramKey: 'soil_temperature',
   label: 'Temperatura do Solo',
   unit: '°C',
   icon: Thermometer,

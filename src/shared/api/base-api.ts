@@ -1,4 +1,5 @@
 import { env } from "@/shared/config/env";
+import { ApiError } from "./api-error";
 
 interface RequestOptions extends Omit<RequestInit, "body"> {
   body?: unknown;
@@ -9,20 +10,37 @@ export async function api<T>(
   endpoint: string,
   { body, accessToken, headers, ...options }: RequestOptions = {},
 ): Promise<T> {
-  const url = `${env.apiBaseUrl}${endpoint}`;
+  const base = env.apiBaseUrl.replace(/\/+$/, "");
+  const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+  const url = `${base}${path}`;
 
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-      ...headers,
-    },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        ...headers,
+      },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    });
+  } catch {
+    throw new ApiError(0, null, "Falha de rede");
+  }
 
   if (!response.ok) {
-    throw new Error(`API error: ${response.status} ${response.statusText}`);
+    let errorBody: unknown = null;
+    try {
+      errorBody = await response.json();
+    } catch {
+      try {
+        errorBody = await response.text();
+      } catch {
+        errorBody = null;
+      }
+    }
+    throw new ApiError(response.status, errorBody, `API error ${response.status}`);
   }
 
   return response.json() as Promise<T>;

@@ -3,7 +3,7 @@ import { ParameterPageLayout } from '@/shared/ui/parameter-page-layout'
 import type { ParamConfig } from '@/shared/ui/parameter-page-layout'
 
 const config: ParamConfig = {
-  paramKey: 'light',
+  paramKey: 'luminosity',
   label: 'Luminosidade',
   unit: 'lux',
   icon: Sun,
