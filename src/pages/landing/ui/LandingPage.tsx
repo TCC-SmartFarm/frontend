@@ -3,7 +3,6 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { ROUTES } from "@/shared/constants/routes";
 import { HeroSection } from "./HeroSection";
 import { LandscapeBand } from "./LandscapeBand";
-import { StatsRow } from "./StatsRow";
 import { ProblemSolution } from "./ProblemSolution";
 import { HowItWorks } from "./HowItWorks";
 import { WhatYouMonitor } from "./WhatYouMonitor";
