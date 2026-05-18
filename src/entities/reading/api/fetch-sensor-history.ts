@@ -6,16 +6,22 @@ export interface RawReading {
   userId: string;
   deviceId: string;
   deviceType: string;
-  value: Partial<{
-    [K in keyof SensorPayload]: SensorPayload[K] | null;
-  }>;
+  name?: string;
+  value: Partial<
+    {
+      [K in keyof SensorPayload]: SensorPayload[K] | null;
+    } & {
+      latitude: number | null;
+      longitude: number | null;
+    }
+  >;
 }
 
 export const fetchSensorHistory = (
+  userId: string,
   deviceId: string,
   days: number,
-  token: string,
 ): Promise<RawReading[]> =>
-  api<RawReading[]>(`/api/sensors/${days}/${encodeURIComponent(deviceId)}`, {
-    accessToken: token,
-  });
+  api<RawReading[]>(
+    `/api/sensors/influx/${encodeURIComponent(userId)}/${days}/${encodeURIComponent(deviceId)}`,
+  );

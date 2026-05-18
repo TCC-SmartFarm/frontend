@@ -5,20 +5,20 @@ export interface LatestMessage {
   userId: string;
   deviceType: string;
   deviceId: string;
-  latitude?: number | null;
-  longitude?: number | null;
-  timestamp?: number;
   name?: string;
-  nickname?: string;
-  payload: Partial<SensorPayload>;
+  payload: Partial<SensorPayload> & {
+    name?: string;
+    latitude?: string | number | null;
+    longitude?: string | number | null;
+    timestamp?: number;
+  };
 }
 
 export interface LatestResponse {
-  status: string;
-  messages_count: number;
-  queue_total: number;
-  data: LatestMessage[];
+  leituras: LatestMessage[];
+  total_dispositivos: number;
+  usuario: string;
 }
 
-export const fetchSensorsLatest = (token: string) =>
-  api<LatestResponse>("/api/sensors/latest", { accessToken: token });
+export const fetchSensorsLatest = (userId: string) =>
+  api<LatestResponse>(`/api/sensors/all/${encodeURIComponent(userId)}`);
