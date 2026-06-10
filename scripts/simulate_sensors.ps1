@@ -94,25 +94,29 @@ foreach ($i in 0..($Sensors.Count - 1)) {
             $lon.ToString($ci),
             $ts
 
-        $args = @(
-            "-h", $MqttHost,
-            "-p", $Port,
-            "-i", $s.Id,
-            "-u", $User,
-            "-P", $Pass,
-            "-t", $topic,
-            "-m", $payload
-        )
+        # mosquitto_pub.exe no Windows lê stdin em modo texto e pode injetar BOM.
+        # Escrever em arquivo temporário (UTF-8 sem BOM confirmado) e usar
+        # "cmd /c type file | mosquitto_pub" faz pipe de bytes crus, sem transformação.
+        $retain  = ($r -eq ($TotalReadings - 1))
+        $tmpFile = [System.IO.Path]::GetTempFileName()
+        try {
+            [System.IO.File]::WriteAllText(
+                $tmpFile,
+                $payload + "`r`n",
+                [System.Text.UTF8Encoding]::new($false)
+            )
 
-        # -r somente na ultima mensagem de cada sensor
-        if ($r -eq ($TotalReadings - 1)) {
-            $args += "-r"
+            $retain_flag = if ($retain) { " -r" } else { "" }
+            $pubCmd = "type `"$tmpFile`" | mosquitto_pub -h $MqttHost -p $Port -i $($s.Id) -u $User -P $Pass -t $topic -l$retain_flag"
+            cmd /c $pubCmd
+            $exitCode = $LASTEXITCODE
+        } finally {
+            Remove-Item $tmpFile -ErrorAction SilentlyContinue
         }
 
-        & mosquitto_pub @args
-        if ($LASTEXITCODE -ne 0) {
-            Write-Error "mosquitto_pub falhou (exit $LASTEXITCODE) no sensor $($s.Id), leitura $r"
-            exit $LASTEXITCODE
+        if ($exitCode -ne 0) {
+            Write-Error "mosquitto_pub falhou (exit $exitCode) no sensor $($s.Id), leitura $r"
+            exit $exitCode
         }
 
         $total++
