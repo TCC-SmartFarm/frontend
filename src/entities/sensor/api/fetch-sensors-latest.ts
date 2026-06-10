@@ -20,5 +20,5 @@ export interface LatestResponse {
   usuario: string;
 }
 
-export const fetchSensorsLatest = (userId: string) =>
-  api<LatestResponse>(`/api/sensors/all/${encodeURIComponent(userId)}`);
+export const fetchSensorsLatest = (accessToken: string) =>
+  api<LatestResponse>("/api/sensors/all", { accessToken });

@@ -1,5 +1,5 @@
 import { fetchSensorHistory, type RawReading } from "@/entities/reading/api/fetch-sensor-history";
-import { getDeviceIdsForUser } from "@/features/auth/lib/user-id-map";
+import { getDeviceIdsForUser } from "@/features/auth/lib/device-id-map";
 import type { LatestMessage, LatestResponse } from "./fetch-sensors-latest";
 
 const FALLBACK_DAYS = 20;
@@ -28,11 +28,12 @@ const synthesizeFromReadings = (readings: RawReading[]): LatestMessage | null =>
 
 export const fetchSensorsLatestFromInflux = async (
   userId: string,
+  accessToken: string,
 ): Promise<LatestResponse> => {
   const deviceIds = getDeviceIdsForUser(userId);
   const results = await Promise.all(
     deviceIds.map((id) =>
-      fetchSensorHistory(userId, id, FALLBACK_DAYS)
+      fetchSensorHistory(id, FALLBACK_DAYS, accessToken)
         .then(synthesizeFromReadings)
         .catch(() => null),
     ),

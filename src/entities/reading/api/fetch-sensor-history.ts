@@ -18,10 +18,10 @@ export interface RawReading {
 }
 
 export const fetchSensorHistory = (
-  userId: string,
   deviceId: string,
   days: number,
+  accessToken: string,
 ): Promise<RawReading[]> =>
-  api<RawReading[]>(
-    `/api/sensors/influx/${encodeURIComponent(userId)}/${days}/${encodeURIComponent(deviceId)}`,
-  );
+  api<RawReading[]>(`/api/sensors/influx/${days}/${encodeURIComponent(deviceId)}`, {
+    accessToken,
+  });

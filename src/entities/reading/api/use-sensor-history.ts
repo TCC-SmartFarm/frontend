@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuthToken } from "@/features/auth/lib/use-auth-token";
 import { useUserId } from "@/features/auth/lib/use-user-id";
 import { readingKeys } from "./query-keys";
 import { fetchSensorHistory, type RawReading } from "./fetch-sensor-history";
@@ -11,6 +12,7 @@ export interface HistoryCache {
 }
 
 export const useSensorHistory = (deviceId: string | null, days: number) => {
+  const { getToken } = useAuthToken();
   const { userId } = useUserId();
   const qc = useQueryClient();
   const safeId = deviceId ?? "__none__";
@@ -28,7 +30,8 @@ export const useSensorHistory = (deviceId: string | null, days: number) => {
         userId,
       ]);
       const effectiveDays = Math.max(days, existing?.maxDaysFetched ?? 0);
-      const readings = await fetchSensorHistory(userId, deviceId, effectiveDays);
+      const token = await getToken();
+      const readings = await fetchSensorHistory(deviceId, effectiveDays, token);
       readings.sort((a, b) => a.timestamp - b.timestamp);
       return {
         readings,
