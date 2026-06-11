@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
-import { Bell, Search } from 'lucide-react'
+import { Bell } from 'lucide-react'
 import { Sidebar } from '@/widgets/sidebar/ui/Sidebar'
+import { SensorSearch } from '@/features/sensor-search/ui/SensorSearch'
 import { Badge } from '@/shared/ui/badge'
 import { LoadingOverlay } from '@/shared/ui/loading-overlay'
 import { useSensorsList } from '@/entities/sensor/api/use-sensors-list'
@@ -32,10 +33,7 @@ export const DashboardLayout = () => {
           className="sticky top-0 z-10 flex h-[60px] shrink-0 items-center gap-3.5 border-b border-border px-7 backdrop-blur-md"
           style={{ background: 'rgba(250,247,241,0.88)' }}
         >
-          <div className="flex max-w-[380px] flex-1 items-center gap-2 rounded-[10px] border border-border bg-white px-3.5 py-2 text-fg-subtle">
-            <Search size={16} strokeWidth={1.75} aria-hidden className="shrink-0" />
-            <span className="text-[14px]">Buscar sensor, talhão…</span>
-          </div>
+          <SensorSearch />
           <div className="flex-1" />
           {sensorCount > 0 && (
             <Badge tone="leaf" dot>

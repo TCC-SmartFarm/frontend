@@ -114,20 +114,6 @@ function AlertasTab() {
             </div>
             <Switch defaultChecked disabled />
           </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="text-sm font-semibold text-fg">SMS</Label>
-              <p className="text-xs text-fg-subtle">Disponível em breve</p>
-            </div>
-            <Switch disabled />
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="text-sm font-semibold text-fg">WhatsApp</Label>
-              <p className="text-xs text-fg-subtle">Disponível em breve</p>
-            </div>
-            <Switch disabled />
-          </div>
         </div>
       </Card>
 

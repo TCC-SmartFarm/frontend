@@ -21,6 +21,7 @@ import { useSensorsList } from '@/entities/sensor/api/use-sensors-list'
 import { useSensorHistory } from '@/entities/reading/api/use-sensor-history'
 import { useEnsureHistoryCoverage } from '@/entities/reading/api/use-ensure-history-coverage'
 import { detectCoverage } from '@/entities/reading/lib/detect-coverage'
+import { downsampleLTTB } from '@/entities/reading/lib/downsample'
 import { useSelectedSensorStore } from '@/shared/stores/selected-sensor-store'
 import { usePeriodStore } from '@/shared/stores/period-store'
 import { periodToDays, periodLabel } from '@/shared/lib/period'
@@ -42,13 +43,18 @@ export interface ParamConfig {
 }
 
 interface ChartPoint {
-  time: string
+  ts: number // epoch em ms, para o eixo de tempo contínuo do gráfico
   value: number
-  ts: number
 }
 
-const formatTimeLabel = (timestampSec: number, days: number): string => {
-  const date = new Date(timestampSec * 1000)
+// Acima disso o downsampling LTTB entra para manter o gráfico fluido
+const MAX_CHART_POINTS = 600
+
+const HOUR_MS = 3_600_000
+const DAY_MS = 86_400_000
+
+const formatTimeLabel = (tsMs: number, days: number): string => {
+  const date = new Date(tsMs)
   if (days <= 1) {
     return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
   }
@@ -56,6 +62,57 @@ const formatTimeLabel = (timestampSec: number, days: number): string => {
     return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
   }
   return date.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })
+}
+
+const formatTooltipDateTime = (tsMs: number): string =>
+  new Date(tsMs).toLocaleString('pt-BR', {
+    weekday: 'short',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+
+// Gera ticks alinhados ao calendário (horas cheias, meias-noites ou inícios
+// de mês conforme a cobertura real dos dados), limitado a ~8 marcas — com
+// eixo numérico os ticks precisam ser explícitos.
+const buildTimeTicks = (minMs: number, maxMs: number, spanDays: number): number[] => {
+  if (maxMs <= minMs) return [minMs]
+  const ticks: number[] = []
+  if (spanDays <= 1) {
+    const spanHours = Math.ceil((maxMs - minMs) / HOUR_MS)
+    const stride = Math.max(1, Math.ceil(spanHours / 6)) * HOUR_MS
+    for (let t = Math.ceil(minMs / HOUR_MS) * HOUR_MS; t <= maxMs; t += stride) {
+      ticks.push(t)
+    }
+    return ticks
+  }
+  if (spanDays > 31) {
+    const cursor = new Date(minMs)
+    cursor.setHours(0, 0, 0, 0)
+    cursor.setDate(1)
+    if (cursor.getTime() < minMs) cursor.setMonth(cursor.getMonth() + 1)
+    const months: number[] = []
+    while (cursor.getTime() <= maxMs) {
+      months.push(cursor.getTime())
+      cursor.setMonth(cursor.getMonth() + 1)
+    }
+    if (months.length >= 2) {
+      const stride = Math.max(1, Math.ceil(months.length / 8))
+      return months.filter((_, i) => i % stride === 0)
+    }
+    // dados cobrem menos de dois meses: cai nos ticks diários abaixo
+  }
+  const stride = Math.max(1, Math.round(Math.ceil((maxMs - minMs) / DAY_MS) / 7))
+  const midnight = new Date(minMs)
+  midnight.setHours(0, 0, 0, 0)
+  let t = midnight.getTime()
+  if (t < minMs) t += DAY_MS
+  for (; t <= maxMs; t += stride * DAY_MS) {
+    ticks.push(t)
+  }
+  return ticks
 }
 
 export const ParameterPageLayout = ({ config }: { config: ParamConfig }) => {
@@ -78,15 +135,24 @@ export const ParameterPageLayout = ({ config }: { config: ParamConfig }) => {
   useDataAvailabilityToast(days, readings.length > 0 ? coverage.actualDays : undefined, selectedId)
 
   const series: ChartPoint[] = useMemo(() => {
-    return readings
+    const points = readings
       .map((r) => {
         const value = r.value[paramKey]
-        return value !== null && value !== undefined
-          ? { time: formatTimeLabel(r.timestamp, days), value, ts: r.timestamp }
-          : null
+        return value !== null && value !== undefined ? { ts: r.timestamp * 1000, value } : null
       })
       .filter((p): p is ChartPoint => p !== null)
-  }, [readings, paramKey, days])
+    return downsampleLTTB(points, MAX_CHART_POINTS)
+  }, [readings, paramKey])
+
+  // Formato dos rótulos segue a cobertura real dos dados, não o período
+  // pedido — se há só alguns dias de leituras, rótulos mensais repetiriam.
+  const chartSpanDays =
+    series.length > 1 ? (series[series.length - 1].ts - series[0].ts) / DAY_MS : 0
+
+  const timeTicks = useMemo(() => {
+    if (series.length === 0) return []
+    return buildTimeTicks(series[0].ts, series[series.length - 1].ts, chartSpanDays)
+  }, [series, chartSpanDays])
 
   const seriesValues = series.map((p) => p.value)
   const currentValue = seriesValues.length > 0 ? seriesValues[seriesValues.length - 1] : null
@@ -103,7 +169,6 @@ export const ParameterPageLayout = ({ config }: { config: ParamConfig }) => {
 
   const isSensorsLoading = sensorsQuery.isPending
   const isHistoryLoading = !!selectedId && historyQuery.isPending && !historyQuery.data
-  const tickInterval = series.length > 6 ? Math.floor(series.length / 6) : 0
 
   return (
     <div className="flex flex-col gap-6 p-8" style={{ maxWidth: 1240 }}>
@@ -274,7 +339,12 @@ export const ParameterPageLayout = ({ config }: { config: ParamConfig }) => {
                     <LineChart data={series} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--sf-border)" vertical={false} />
                       <XAxis
-                        dataKey="time"
+                        dataKey="ts"
+                        type="number"
+                        scale="time"
+                        domain={['dataMin', 'dataMax']}
+                        ticks={timeTicks}
+                        tickFormatter={(ts: number) => formatTimeLabel(ts, chartSpanDays)}
                         tick={{
                           fontSize: 11,
                           fill: 'var(--sf-fg-subtle)',
@@ -282,7 +352,6 @@ export const ParameterPageLayout = ({ config }: { config: ParamConfig }) => {
                         }}
                         tickLine={false}
                         axisLine={false}
-                        interval={tickInterval}
                       />
                       <YAxis
                         tick={{
@@ -295,16 +364,16 @@ export const ParameterPageLayout = ({ config }: { config: ParamConfig }) => {
                         width={48}
                       />
                       <Tooltip
-                        contentStyle={{
-                          background: '#fff',
-                          border: '1px solid var(--sf-border)',
-                          borderRadius: 10,
-                          boxShadow: 'var(--sf-shadow-sm)',
-                          fontFamily: 'var(--sf-font-display)',
-                          fontSize: 13,
-                        }}
-                        formatter={(value: unknown) => [`${value ?? ''} ${unit}`, label]}
-                        labelStyle={{ color: 'var(--sf-fg-subtle)', fontSize: 11 }}
+                        cursor={{ stroke: 'var(--sf-border)', strokeWidth: 1 }}
+                        content={
+                          <ChartTooltipContent
+                            icon={Icon}
+                            paramLabel={label}
+                            unit={unit}
+                            color={color}
+                            fmt={fmt}
+                          />
+                        }
                       />
                       <Line
                         type="monotone"
@@ -391,6 +460,54 @@ function InfoRow({ label, children }: { label: string; children: React.ReactNode
     <div className="flex items-center justify-between">
       <span className="text-fg-subtle">{label}</span>
       <span className="text-fg">{children}</span>
+    </div>
+  )
+}
+
+interface ChartTooltipContentProps {
+  // injetadas pelo recharts quando o tooltip está ativo
+  active?: boolean
+  payload?: ReadonlyArray<{ value?: number | string }>
+  label?: number
+  // configuração do parâmetro exibido
+  icon: LucideIcon
+  paramLabel: string
+  unit: string
+  color: string
+  fmt: (v: number) => string
+}
+
+function ChartTooltipContent({
+  active,
+  payload,
+  label,
+  icon: Icon,
+  paramLabel,
+  unit,
+  color,
+  fmt,
+}: ChartTooltipContentProps) {
+  if (!active || !payload || payload.length === 0 || typeof label !== 'number') return null
+  const raw = payload[0]?.value
+  if (typeof raw !== 'number') return null
+  return (
+    <div
+      className="rounded-[10px] border border-border bg-white px-3.5 py-2.5"
+      style={{ boxShadow: 'var(--sf-shadow-sm)', fontFamily: 'var(--sf-font-display)' }}
+    >
+      <div className="font-mono text-[11px] text-fg-subtle">{formatTooltipDateTime(label)}</div>
+      <div className="mt-1.5 flex items-center gap-2 text-[13px]">
+        <span
+          className="flex size-5 items-center justify-center rounded-md"
+          style={{ background: `${color}22`, color }}
+        >
+          <Icon size={12} strokeWidth={2} aria-hidden />
+        </span>
+        <span className="text-fg-muted">{paramLabel}</span>
+        <span className="font-semibold tabular-nums" style={{ color }}>
+          {fmt(raw)} {unit}
+        </span>
+      </div>
     </div>
   )
 }
