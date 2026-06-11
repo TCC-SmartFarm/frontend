@@ -10,6 +10,7 @@ import { resolveErrorVariant } from '@/shared/ui/error-state.helpers'
 import { SensorListSkeleton } from '@/shared/ui/sensor-list-skeleton'
 import { Skeleton } from '@/shared/ui/skeleton'
 import { useSensorsList } from '@/entities/sensor/api/use-sensors-list'
+import { env } from '@/shared/config/env'
 import { useSelectedSensorStore } from '@/shared/stores/selected-sensor-store'
 import { statusForParam, type Status } from '@/shared/constants/thresholds'
 import { cn } from '@/shared/lib/utils'
@@ -172,9 +173,17 @@ export const DashboardMapPage = () => {
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
     const map = L.map(containerRef.current).setView(MAP_CENTER, MAP_ZOOM)
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    // O tile.openstreetmap.org bloqueia apps deployados (política de uso).
+    // Padrão: Carto (gratuito p/ uso não-comercial, sem chave); VITE_MAP_TILE_URL
+    // permite trocar por MapTiler/Stadia sem mexer no código.
+    const tileUrl =
+      env.mapTileUrl ||
+      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+    L.tileLayer(tileUrl, {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
       maxZoom: 19,
+      subdomains: 'abcd',
     }).addTo(map)
 
     map.on('popupopen', (e: L.PopupEvent) => {

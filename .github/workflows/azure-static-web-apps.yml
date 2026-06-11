@@ -46,7 +46,8 @@ jobs:
           VITE_AUTH0_DOMAIN: ${{ vars.VITE_AUTH0_DOMAIN }}
           VITE_AUTH0_CLIENT_ID: ${{ vars.VITE_AUTH0_CLIENT_ID }}
           VITE_AUTH0_AUDIENCE: ${{ vars.VITE_AUTH0_AUDIENCE }}
+          # Opcional: troca o provedor de tiles do mapa (padrão: Carto, sem chave)
+          VITE_MAP_TILE_URL: ${{ vars.VITE_MAP_TILE_URL }}
 
           # Variáveis futuras
-          # VITE_MAP_TILE_URL: ${{ vars.VITE_MAP_TILE_URL }}
           # VITE_MAP_TILE_API_KEY: ${{ secrets.VITE_MAP_TILE_API_KEY }}
