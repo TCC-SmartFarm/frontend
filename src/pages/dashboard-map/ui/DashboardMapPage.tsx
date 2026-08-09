@@ -1,8 +1,6 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import L from 'leaflet'
-import { Plus, Bell, Droplets, Thermometer, Sun, Battery, Wind, CloudRain } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
 import { Badge } from '@/shared/ui/badge'
 import { EmptyState } from '@/shared/ui/empty-state'
 import { ErrorState } from '@/shared/ui/error-state'
@@ -12,139 +10,35 @@ import { Skeleton } from '@/shared/ui/skeleton'
 import { useSensorsList } from '@/entities/sensor/api/use-sensors-list'
 import { env } from '@/shared/config/env'
 import { useSelectedSensorStore } from '@/shared/stores/selected-sensor-store'
-import { statusForParam, type Status } from '@/shared/constants/thresholds'
+import { useThresholdsStore } from '@/shared/stores/thresholds-store'
+import { statusForParam, type ParamThresholdMap } from '@/shared/constants/thresholds'
 import { cn } from '@/shared/lib/utils'
+import { createSensorIcon, pinKey, pinStateFor, type PinState } from './sensor-pin'
+import { SensorHoverCard } from './SensorHoverCard'
+import { METRICS, formatMetric } from './metrics'
 import type { Sensor, SensorPayload } from '@/entities/sensor/model/types'
-import type { SensorParam } from '@/entities/reading/model/types'
-
-interface MetricDef {
-  key: SensorParam
-  label: string
-  unit: string
-  icon: LucideIcon
-  format?: (v: number) => string
-}
-
-const METRICS: MetricDef[] = [
-  { key: 'soil_moisture', label: 'Umidade solo', unit: '%', icon: Droplets },
-  { key: 'soil_temperature', label: 'Temp. solo', unit: '°C', icon: Thermometer },
-  { key: 'air_humidity', label: 'Umidade ar', unit: '%', icon: CloudRain },
-  { key: 'luminosity', label: 'Luz', unit: 'lx', icon: Sun, format: (v) => Math.round(v).toLocaleString('pt-BR') },
-  { key: 'air_temperature', label: 'Temp. ar', unit: '°C', icon: Wind },
-  { key: 'battery', label: 'Bateria', unit: '%', icon: Battery },
-]
-
-const STATUS_COLORS: Record<Status, string> = {
-  ok: '#2d6814',
-  warn: '#c78020',
-  alert: '#c74020',
-}
 
 const MAP_CENTER: [number, number] = [-22.9, -47.05]
 const MAP_ZOOM = 14
 
-const overallStatus = (sensor: Sensor): Status => {
-  const reading = sensor.lastReading
-  if (!reading) return 'ok'
-  const statuses = METRICS.map((m) => statusForParam(m.key, reading[m.key] ?? null))
-  if (statuses.includes('alert')) return 'alert'
-  if (statuses.includes('warn')) return 'warn'
-  return 'ok'
-}
+/** A janela de "offline" é de 45 min; reavaliar de minuto em minuto basta. */
+const STALENESS_TICK_MS = 60 * 1000
 
-const sensorHasIssue = (sensor: Sensor): boolean => {
+const OFFLINE_PIN: PinState = { tone: 'offline', param: null }
+
+/**
+ * Espera antes de abrir o card de hover, para o mouse atravessando o mapa não
+ * disparar um card por pin no caminho.
+ */
+const HOVER_DELAY_MS = 150
+
+/** Classe aplicada direto no DOM: aumentar o pin não pode esperar o React. */
+const PIN_HOVER_CLASS = 'sf-pin-wrap--hover'
+
+const sensorHasIssue = (sensor: Sensor, thresholds: ParamThresholdMap): boolean => {
   const reading = sensor.lastReading
   if (!reading) return false
-  return METRICS.some((m) => statusForParam(m.key, reading[m.key] ?? null) !== 'ok')
-}
-
-const formatMetric = (m: MetricDef, value: number | null | undefined): string => {
-  if (value === null || value === undefined) return '—'
-  return m.format ? m.format(value) : String(Math.round(value))
-}
-
-function createSensorIcon(status: Status, selected: boolean): L.DivIcon {
-  const color = STATUS_COLORS[status]
-  const scale = selected ? 1.2 : 1
-  const w = Math.round(34 * scale)
-  const h = Math.round(44 * scale)
-
-  const html = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 34 44">
-      ${selected ? `<circle cx="17" cy="15" r="20" fill="${color}" opacity="0.18"/>` : ''}
-      <path d="M17,2 C9,2 4,8 4,15 C4,25 17,42 17,42 C17,42 30,25 30,15 C30,8 25,2 17,2 Z"
-        fill="${color}"
-        style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.28))"
-      />
-      <circle cx="17" cy="15" r="7" fill="white" opacity="0.92"/>
-      <circle cx="17" cy="15" r="3" fill="${color}" opacity="0.7"/>
-    </svg>
-  `
-
-  return L.divIcon({
-    html,
-    className: 'sensor-pin',
-    iconSize: [w, h],
-    iconAnchor: [w / 2, h],
-    tooltipAnchor: [0, -h + 4],
-    popupAnchor: [0, -h + 6],
-  })
-}
-
-function buildTooltipHTML(sensor: Sensor): string {
-  const status = overallStatus(sensor)
-  const color = STATUS_COLORS[status]
-  const moisture = sensor.lastReading?.soil_moisture
-  return `
-    <div style="font-family: var(--sf-font-display); font-size: 12px; padding: 2px 0;">
-      <strong>${sensor.name}</strong>
-      ${
-        moisture !== undefined && moisture !== null
-          ? `<span style="color: ${color}; margin-left: 6px;">${Math.round(moisture)}%</span>`
-          : ''
-      }
-    </div>
-  `
-}
-
-function buildPopupHTML(sensor: Sensor): string {
-  const reading = sensor.lastReading ?? ({} as Partial<SensorPayload>)
-  const metrics = METRICS.map((m) => {
-    const val = reading[m.key] ?? null
-    const st = statusForParam(m.key, val)
-    const color = STATUS_COLORS[st]
-    const display = formatMetric(m, val)
-    return `
-      <div style="display: flex; flex-direction: column; gap: 2px; border: 1px solid #e7ddc8; background: #faf7f1; border-radius: 6px; padding: 6px;">
-        <div style="display: flex; align-items: center; gap: 4px;">
-          <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: ${color};"></span>
-          <span style="font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #6b5a3d;">${m.label}</span>
-        </div>
-        <div style="font-family: var(--sf-font-data); font-size: 13px; font-weight: 700; color: #201a13; line-height: 1;">
-          ${display}<span style="font-family: var(--sf-font-body); font-size: 9px; font-weight: 500; color: #4e4130; margin-left: 2px;">${m.unit}</span>
-        </div>
-      </div>
-    `
-  }).join('')
-
-  return `
-    <div style="min-width: 240px; font-family: var(--sf-font-body);">
-      <div style="margin-bottom: 8px;">
-        <div style="font-family: var(--sf-font-display); font-size: 15px; font-weight: 700; color: #201a13; line-height: 1.2;">${sensor.name}</div>
-        <div style="font-size: 11px; color: #6b5a3d;">${sensor.deviceId}${sensor.deviceType ? ' · ' + sensor.deviceType : ''}</div>
-      </div>
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 12px;">
-        ${metrics}
-      </div>
-      <button
-        class="popup-open-sensor-btn"
-        data-sensor-id="${sensor.deviceId}"
-        style="width: 100%; padding: 8px; border: none; border-radius: 10px; background: #35502a; color: white; font-family: var(--sf-font-display); font-size: 13px; font-weight: 600; cursor: pointer;"
-      >
-        Abrir sensor →
-      </button>
-    </div>
-  `
+  return METRICS.some((m) => statusForParam(thresholds, m.key, reading[m.key] ?? null) !== 'ok')
 }
 
 export const DashboardMapPage = () => {
@@ -155,11 +49,44 @@ export const DashboardMapPage = () => {
   const sensors = useMemo(() => sensorsQuery.data ?? [], [sensorsQuery.data])
   const selectedId = useSelectedSensorStore((s) => s.selectedSensorId)
   const setSelectedId = useSelectedSensorStore((s) => s.setSelectedSensorId)
+  const thresholds = useThresholdsStore((s) => s.thresholds)
+
+  // Um sensor fica offline pela passagem do tempo, sem nenhum dado novo chegar;
+  // sem este tick o pin continuaria pulsando até o próximo refetch da lista.
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), STALENESS_TICK_MS)
+    return () => clearInterval(id)
+  }, [])
+
+  // Estado do pin calculado uma vez por (sensores × limites × tempo), em vez de
+  // espalhar o mapa de limites pelos effects imperativos do Leaflet.
+  const pinStateById = useMemo(
+    () => new Map(sensors.map((s) => [s.devEUI, pinStateFor(s, thresholds, now)])),
+    [sensors, thresholds, now],
+  )
+
+  // Card de hover: o id fica separado da posição para o card acompanhar o pin
+  // quando a lista recarrega sem o mouse sair de cima.
+  const [hovered, setHovered] = useState<{ id: string; x: number; y: number } | null>(null)
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hoveredIdRef = useRef<string | null>(null)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<L.Map | null>(null)
   const markersRef = useRef<Record<string, L.Marker>>({})
+  const pinKeysRef = useRef<Record<string, string>>({})
   const setSelectedIdRef = useRef(setSelectedId)
+  const hasFitBoundsRef = useRef(false)
+
+  const closeHover = useCallback(() => {
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
+    hoverTimerRef.current = null
+    hoveredIdRef.current = null
+    setHovered(null)
+  }, [])
+
+  useEffect(() => () => closeHover(), [closeHover])
 
   useEffect(() => {
     navigateRef.current = navigate
@@ -186,16 +113,10 @@ export const DashboardMapPage = () => {
       subdomains: 'abcd',
     }).addTo(map)
 
-    map.on('popupopen', (e: L.PopupEvent) => {
-      const el = e.popup.getElement()
-      const btn = el?.querySelector<HTMLButtonElement>('.popup-open-sensor-btn')
-      if (!btn) return
-      const handler = () => {
-        const id = btn.getAttribute('data-sensor-id')
-        if (id) navigateRef.current(`/dashboard/sensor/${id}`)
-      }
-      btn.addEventListener('click', handler)
-    })
+    // Arrastar/zoom move os pins sob o cursor: manter o card aberto o deixaria
+    // ancorado numa posição velha, e o mouseout do marcador não dispara.
+    map.on('movestart', closeHover)
+    map.on('zoomstart', closeHover)
 
     mapRef.current = map
 
@@ -204,7 +125,7 @@ export const DashboardMapPage = () => {
       mapRef.current = null
       markersRef.current = {}
     }
-  }, [])
+  }, [closeHover])
 
   // Sync markers with sensors data
   useEffect(() => {
@@ -214,65 +135,97 @@ export const DashboardMapPage = () => {
     const plottable = sensors.filter(
       (s) => s.latitude !== null && s.longitude !== null,
     )
-    const plottableIds = new Set(plottable.map((s) => s.deviceId))
+    const plottableIds = new Set(plottable.map((s) => s.devEUI))
 
     Object.entries(markersRef.current).forEach(([id, marker]) => {
       if (!plottableIds.has(id)) {
         marker.remove()
         delete markersRef.current[id]
+        delete pinKeysRef.current[id]
       }
     })
 
     plottable.forEach((sensor) => {
-      const isSelected = sensor.deviceId === selectedId
-      const status = overallStatus(sensor)
-      const existing = markersRef.current[sensor.deviceId]
+      const isSelected = sensor.devEUI === selectedId
+      const state = pinStateById.get(sensor.devEUI) ?? OFFLINE_PIN
+      const key = pinKey(state, isSelected)
+      const existing = markersRef.current[sensor.devEUI]
       const lat = sensor.latitude as number
       const lng = sensor.longitude as number
 
       if (existing) {
         existing.setLatLng([lat, lng])
-        existing.setIcon(createSensorIcon(status, isSelected))
-        existing.setTooltipContent(buildTooltipHTML(sensor))
-        existing.setPopupContent(buildPopupHTML(sensor))
+        // Trocar o ícone recria o nó DOM e reinicia o halo; só quando muda algo.
+        if (pinKeysRef.current[sensor.devEUI] !== key) {
+          existing.setIcon(createSensorIcon(state, isSelected))
+          pinKeysRef.current[sensor.devEUI] = key
+          // O nó novo nasce sem a classe de hover; se o mouse ainda está em
+          // cima, o pin encolheria sozinho no meio do refetch.
+          if (hoveredIdRef.current === sensor.devEUI) {
+            existing.getElement()?.classList.add(PIN_HOVER_CLASS)
+          }
+        }
         return
       }
 
       const marker = L.marker([lat, lng], {
-        icon: createSensorIcon(status, isSelected),
+        icon: createSensorIcon(state, isSelected),
       })
-      marker.bindTooltip(buildTooltipHTML(sensor), { direction: 'top', opacity: 1 })
-      marker.bindPopup(buildPopupHTML(sensor), { minWidth: 260, maxWidth: 280 })
-      marker.on('click', () => setSelectedIdRef.current(sensor.deviceId))
+      pinKeysRef.current[sensor.devEUI] = key
+      marker.on('click', () => setSelectedIdRef.current(sensor.devEUI))
+
+      marker.on('mouseover', () => {
+        // O pin cresce na hora; só o card espera, para o mouse atravessando o
+        // mapa não abrir um card atrás do outro.
+        marker.getElement()?.classList.add(PIN_HOVER_CLASS)
+        hoveredIdRef.current = sensor.devEUI
+        if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
+        hoverTimerRef.current = setTimeout(() => {
+          const current = mapRef.current
+          if (!current || hoveredIdRef.current !== sensor.devEUI) return
+          const point = current.latLngToContainerPoint(marker.getLatLng())
+          setHovered({ id: sensor.devEUI, x: point.x, y: point.y })
+        }, HOVER_DELAY_MS)
+      })
+
+      marker.on('mouseout', () => {
+        marker.getElement()?.classList.remove(PIN_HOVER_CLASS)
+        closeHover()
+      })
+
       marker.addTo(map)
-      markersRef.current[sensor.deviceId] = marker
+      markersRef.current[sensor.devEUI] = marker
     })
 
-    // Fit bounds when first batch arrives
-    if (plottable.length > 0) {
+    // Só no primeiro lote: reenquadrar a cada mudança de seleção faria o mapa
+    // pular sob o usuário toda vez que ele clicasse num sensor da lista.
+    if (plottable.length > 0 && !hasFitBoundsRef.current) {
+      hasFitBoundsRef.current = true
       const bounds = L.latLngBounds(
         plottable.map((s) => [s.latitude as number, s.longitude as number]),
       )
       map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 })
     }
-  }, [sensors, selectedId])
+  }, [sensors, selectedId, pinStateById, closeHover])
 
-  // Update marker icons on selection change
-  useEffect(() => {
-    Object.entries(markersRef.current).forEach(([id, marker]) => {
-      const sensor = sensors.find((s) => s.deviceId === id)
-      if (!sensor) return
-      marker.setIcon(createSensorIcon(overallStatus(sensor), id === selectedId))
-    })
-  }, [selectedId, sensors])
-
-  const selected = sensors.find((s) => s.deviceId === selectedId) ?? null
+  const selected = sensors.find((s) => s.devEUI === selectedId) ?? null
   const selectedReading = selected?.lastReading ?? ({} as Partial<SensorPayload>)
-  const selectedHasIssue = selected ? sensorHasIssue(selected) : false
+  const selectedHasIssue = selected ? sensorHasIssue(selected, thresholds) : false
+  const hoveredSensor = hovered ? sensors.find((s) => s.devEUI === hovered.id) : null
 
   return (
     <div className="relative" style={{ height: 'calc(100vh - 60px)' }}>
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+
+      {hovered && hoveredSensor && (
+        <SensorHoverCard
+          key={hoveredSensor.devEUI}
+          sensor={hoveredSensor}
+          thresholds={thresholds}
+          x={hovered.x}
+          y={hovered.y}
+        />
+      )}
 
       <div className="absolute bottom-4 right-4 top-4 z-[1000] flex w-[272px] flex-col overflow-hidden rounded-2xl border border-white/50 bg-white/92 shadow-xl backdrop-blur-md">
         {sensorsQuery.error ? (
@@ -307,12 +260,15 @@ export const DashboardMapPage = () => {
           </div>
         ) : (
           <>
+            {/* Cadastro de sensor ainda não implementado no back-end (não há POST /api/sensors).
+                O sensor é provisionado pelo app mobile; ao reativar, reimportar `Plus` do lucide-react.
             <div className="shrink-0 p-3 pb-0">
               <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-leaf-700 py-2.5 font-display text-sm font-semibold text-white shadow-xs transition-colors hover:bg-leaf-600 active:scale-[0.98]">
                 <Plus size={15} strokeWidth={2.5} aria-hidden />
                 Adicionar sensor
               </button>
             </div>
+            */}
 
             {selected && (
               <div className="shrink-0 border-b border-border/60 px-4 pb-4 pt-3.5">
@@ -331,13 +287,13 @@ export const DashboardMapPage = () => {
                   {selected.name}
                 </h2>
                 <p className="mt-0.5 truncate font-mono text-[11px] text-fg-subtle">
-                  {selected.deviceId}
+                  {selected.devEUI}
                 </p>
 
                 <div className="mt-3 grid grid-cols-3 gap-1.5">
                   {METRICS.map((m) => {
                     const val = selectedReading[m.key] ?? null
-                    const st = statusForParam(m.key, val)
+                    const st = statusForParam(thresholds, m.key, val)
                     const iconCls =
                       st === 'ok' ? 'text-ok-dot' : st === 'warn' ? 'text-warn-dot' : 'text-alert-dot'
                     const display = formatMetric(m, val)
@@ -368,16 +324,12 @@ export const DashboardMapPage = () => {
                   })}
                 </div>
 
-                <div className="mt-3 flex gap-2">
+                <div className="mt-3">
                   <button
-                    onClick={() => navigate(`/dashboard/sensor/${selected.deviceId}`)}
-                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-leaf-700 py-2 font-display text-[13px] font-semibold text-white hover:bg-leaf-600"
+                    onClick={() => navigate(`/dashboard/sensor/${selected.devEUI}`)}
+                    className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-leaf-700 py-2 font-display text-[13px] font-semibold text-white hover:bg-leaf-600"
                   >
                     Abrir sensor
-                  </button>
-                  <button className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 font-display text-[13px] font-semibold text-fg-muted hover:border-leaf-600 hover:text-fg">
-                    <Bell size={13} strokeWidth={1.75} aria-hidden />
-                    Alerta
                   </button>
                 </div>
               </div>
@@ -396,11 +348,15 @@ export const DashboardMapPage = () => {
               <div className="flex-1 overflow-y-auto">
                 {sensors.map((sensor) => {
                   const reading = sensor.lastReading ?? ({} as Partial<SensorPayload>)
-                  const moistSt = statusForParam('soil_moisture', reading.soil_moisture ?? null)
-                  const battSt = statusForParam('battery', reading.battery ?? null)
+                  const moistSt = statusForParam(
+                    thresholds,
+                    'soil_moisture',
+                    reading.soil_moisture ?? null,
+                  )
+                  const battSt = statusForParam(thresholds, 'battery', reading.battery ?? null)
                   const hasIssue = moistSt !== 'ok' || battSt !== 'ok'
                   const isAlert = moistSt === 'alert' || battSt === 'alert'
-                  const isActive = sensor.deviceId === selectedId
+                  const isActive = sensor.devEUI === selectedId
                   const dotCls = isAlert ? 'bg-alert-dot' : hasIssue ? 'bg-warn-dot' : 'bg-ok-dot'
                   const moistDisplay =
                     typeof reading.soil_moisture === 'number'
@@ -410,17 +366,15 @@ export const DashboardMapPage = () => {
 
                   return (
                     <button
-                      key={sensor.deviceId}
+                      key={sensor.devEUI}
                       type="button"
                       onClick={() => {
-                        setSelectedId(sensor.deviceId)
-                        const marker = markersRef.current[sensor.deviceId]
-                        if (marker && mapRef.current && hasLocation) {
+                        setSelectedId(sensor.devEUI)
+                        if (mapRef.current && hasLocation) {
                           mapRef.current.panTo([
                             sensor.latitude as number,
                             sensor.longitude as number,
                           ])
-                          marker.openPopup()
                         }
                       }}
                       className={cn(
@@ -442,7 +396,7 @@ export const DashboardMapPage = () => {
                             )}
                           </div>
                           <div className="truncate font-mono text-[10px] text-fg-subtle">
-                            {sensor.deviceId}
+                            {sensor.devEUI}
                           </div>
                         </div>
                         <span className="shrink-0 font-data text-[13px] font-semibold tabular-nums text-fg">

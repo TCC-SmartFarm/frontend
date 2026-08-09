@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
-import { Bell } from 'lucide-react'
 import { Sidebar } from '@/widgets/sidebar/ui/Sidebar'
 import { SensorSearch } from '@/features/sensor-search/ui/SensorSearch'
 import { Badge } from '@/shared/ui/badge'
@@ -15,9 +14,9 @@ export const DashboardLayout = () => {
 
   useEffect(() => {
     if (!sensors || sensors.length === 0) return
-    const exists = selectedSensorId && sensors.some((s) => s.deviceId === selectedSensorId)
+    const exists = selectedSensorId && sensors.some((s) => s.devEUI === selectedSensorId)
     if (!exists) {
-      setSelectedSensorId(sensors[0].deviceId)
+      setSelectedSensorId(sensors[0].devEUI)
     }
   }, [sensors, selectedSensorId, setSelectedSensorId])
 
@@ -43,12 +42,6 @@ export const DashboardLayout = () => {
           {isFetching && !isLoading && (
             <span className="text-xs text-fg-subtle">Atualizando…</span>
           )}
-          <button
-            className="relative flex size-10 items-center justify-center rounded-[10px] border border-border bg-white text-fg-muted transition-colors hover:text-fg"
-            aria-label="Notificações"
-          >
-            <Bell size={18} strokeWidth={1.75} aria-hidden />
-          </button>
         </header>
 
         <main className="flex-1 overflow-auto">

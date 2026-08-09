@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
   LineChart,
@@ -19,13 +19,12 @@ import { resolveErrorVariant } from './error-state.helpers'
 import { cn } from '@/shared/lib/utils'
 import { useSensorsList } from '@/entities/sensor/api/use-sensors-list'
 import { useSensorHistory } from '@/entities/reading/api/use-sensor-history'
-import { useEnsureHistoryCoverage } from '@/entities/reading/api/use-ensure-history-coverage'
-import { detectCoverage } from '@/entities/reading/lib/detect-coverage'
+import { useHistoryAvailability } from '@/entities/reading/api/use-history-availability'
 import { downsampleLTTB } from '@/entities/reading/lib/downsample'
 import { useSelectedSensorStore } from '@/shared/stores/selected-sensor-store'
 import { usePeriodStore } from '@/shared/stores/period-store'
-import { periodToDays, periodLabel } from '@/shared/lib/period'
-import { useDataAvailabilityToast } from '@/shared/lib/toast'
+import { useThresholdsStore } from '@/shared/stores/thresholds-store'
+import { PERIOD_LIST, isPeriodAvailable, periodToDays, periodLabel } from '@/shared/lib/period'
 import { statusForParam, statusLabel as toStatusLabel } from '@/shared/constants/thresholds'
 import { PeriodSelector } from '@/features/period-selector/ui/PeriodSelector'
 import { SensorSelector } from '@/features/sensor-selector/ui/SensorSelector'
@@ -125,14 +124,31 @@ export const ParameterPageLayout = ({ config }: { config: ParamConfig }) => {
   const setSelectedId = useSelectedSensorStore((s) => s.setSelectedSensorId)
   const period = usePeriodStore((s) => s.period)
   const setPeriod = usePeriodStore((s) => s.setPeriod)
+  const thresholds = useThresholdsStore((s) => s.thresholds)
   const days = periodToDays(period)
 
-  useEnsureHistoryCoverage(selectedId, days)
-  const historyQuery = useSensorHistory(selectedId, days)
+  // O sensor é selecionado pelo devEUI, mas o histórico é consultado pelo
+  // devAddr — precisa resolver um no outro antes de chamar os hooks.
+  const selected = sensors.find((s) => s.devEUI === selectedId) ?? null
+  const selectedDevAddr = selected?.devAddr ?? null
+
+  const historyQuery = useSensorHistory(selectedDevAddr, days)
   const readings = useMemo(() => historyQuery.data ?? [], [historyQuery.data])
 
-  const coverage = useMemo(() => detectCoverage(readings, days), [readings, days])
-  useDataAvailabilityToast(days, readings.length > 0 ? coverage.actualDays : undefined, selectedId)
+  // Enquanto a query não assenta, `undefined` = "ainda não sabemos": passar 0
+  // faria todos os botões de período nascerem bloqueados a cada carregamento.
+  const availabilityQuery = useHistoryAvailability(selectedDevAddr)
+  const availableDays = availabilityQuery.isSuccess ? availabilityQuery.data : undefined
+
+  // Se o período escolhido não tem dados que o sustentem, cai para "Máximo".
+  // Só encolhe, nunca expande sozinho — o período é global às 6 páginas.
+  useEffect(() => {
+    if (availableDays === undefined || availableDays <= 0) return
+    const current = PERIOD_LIST.find((p) => p.value === period)
+    if (current && !isPeriodAvailable(current, availableDays)) {
+      setPeriod('max')
+    }
+  }, [availableDays, period, setPeriod])
 
   const series: ChartPoint[] = useMemo(() => {
     const points = readings
@@ -161,11 +177,13 @@ export const ParameterPageLayout = ({ config }: { config: ParamConfig }) => {
   const avgVal =
     seriesValues.length > 0 ? seriesValues.reduce((a, b) => a + b, 0) / seriesValues.length : null
 
-  const status = statusForParam(paramKey, currentValue)
+  const status = statusForParam(thresholds, paramKey, currentValue)
   const statusTone = status === 'ok' ? 'ok' : status === 'warn' ? 'warn' : 'alert'
 
-  const selected = sensors.find((s) => s.deviceId === selectedId) ?? null
-  const otherSensors = sensors.filter((s) => s.deviceId !== selectedId).slice(0, 6)
+  // "Mínima (máximo)" soaria estranho; para a opção Máximo o rótulo é descritivo.
+  const periodStatLabel = period === 'max' ? 'todo o período' : periodLabel(period).toLowerCase()
+
+  const otherSensors = sensors.filter((s) => s.devEUI !== selectedId).slice(0, 6)
 
   const isSensorsLoading = sensorsQuery.isPending
   const isHistoryLoading = !!selectedId && historyQuery.isPending && !historyQuery.data
@@ -256,12 +274,12 @@ export const ParameterPageLayout = ({ config }: { config: ParamConfig }) => {
                   )}
                   <div className="mt-5 grid grid-cols-3 gap-3 border-t border-border pt-4">
                     <MiniStat
-                      label={`Mínima (${periodLabel(period).toLowerCase()})`}
+                      label={`Mínima (${periodStatLabel})`}
                       value={minVal !== null ? fmt(minVal) : '—'}
                       unit={unit}
                     />
                     <MiniStat
-                      label={`Máxima (${periodLabel(period).toLowerCase()})`}
+                      label={`Máxima (${periodStatLabel})`}
                       value={maxVal !== null ? fmt(maxVal) : '—'}
                       unit={unit}
                     />
@@ -277,7 +295,7 @@ export const ParameterPageLayout = ({ config }: { config: ParamConfig }) => {
                   <h3 className="mb-4 font-display text-base font-semibold text-fg">Sobre este sensor</h3>
                   <div className="flex flex-col gap-3 text-sm">
                     <InfoRow label="Identificação">
-                      <span className="font-mono text-xs">{selected.deviceId}</span>
+                      <span className="font-mono text-xs">{selected.devEUI}</span>
                     </InfoRow>
                     {selected.deviceType && (
                       <InfoRow label="Tipo">
@@ -323,7 +341,11 @@ export const ParameterPageLayout = ({ config }: { config: ParamConfig }) => {
                       Passe o mouse sobre o gráfico para ver valores.
                     </p>
                   </div>
-                  <PeriodSelector value={period} onChange={setPeriod} />
+                  <PeriodSelector
+                    value={period}
+                    onChange={setPeriod}
+                    availableDays={availableDays}
+                  />
                 </div>
                 {historyQuery.error ? (
                   <ErrorState
@@ -396,14 +418,14 @@ export const ParameterPageLayout = ({ config }: { config: ParamConfig }) => {
                   <div className="grid grid-cols-3 gap-3">
                     {otherSensors.map((s) => {
                       const value = s.lastReading?.[paramKey] ?? null
-                      const st = statusForParam(paramKey, value)
+                      const st = statusForParam(thresholds, paramKey, value)
                       const dotClass =
                         st === 'ok' ? 'bg-ok-dot' : st === 'warn' ? 'bg-warn-dot' : 'bg-alert-dot'
                       return (
                         <button
-                          key={s.deviceId}
+                          key={s.devEUI}
                           type="button"
-                          onClick={() => setSelectedId(s.deviceId)}
+                          onClick={() => setSelectedId(s.devEUI)}
                           className="flex items-center gap-3 rounded-[10px] border border-border bg-sand-50 px-3.5 py-3 text-left transition-all hover:border-leaf-600 hover:shadow-xs"
                         >
                           <span className={cn('size-2.5 shrink-0 rounded-full', dotClass)} />
@@ -412,7 +434,7 @@ export const ParameterPageLayout = ({ config }: { config: ParamConfig }) => {
                               {s.name}
                             </div>
                             <div className="truncate font-mono text-[11px] text-fg-subtle">
-                              {s.deviceId}
+                              {s.devEUI}
                             </div>
                           </div>
                           <div className="shrink-0 font-data text-xl font-semibold tabular-nums text-fg">

@@ -7,7 +7,7 @@ export type SensorParam =
   | "battery";
 
 export interface Reading {
-  deviceId: string;
+  devEUI: string;
   timestamp: number;
   soil_temperature: number | null;
   soil_moisture: number | null;

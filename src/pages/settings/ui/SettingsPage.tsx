@@ -1,20 +1,21 @@
 import { useState } from 'react'
 import { Card } from '@/shared/ui/card'
 import { Button } from '@/shared/ui/button'
-import { Switch } from '@/shared/ui/switch'
-import { Label } from '@/shared/ui/label'
 import { Badge } from '@/shared/ui/badge'
 import { EmptyState } from '@/shared/ui/empty-state'
 import { ErrorState } from '@/shared/ui/error-state'
 import { resolveErrorVariant } from '@/shared/ui/error-state.helpers'
 import { SensorListSkeleton } from '@/shared/ui/sensor-list-skeleton'
+import { Skeleton } from '@/shared/ui/skeleton'
 import { ProfileEditForm } from '@/features/profile-edit/ui/ProfileEditForm'
+import { ThresholdsForm } from '@/features/thresholds-edit/ui/ThresholdsForm'
+import { SensorNameEditor } from '@/features/sensor-rename/ui/SensorNameEditor'
 import { useAuth } from '@/features/auth/model/use-auth'
 import { useSensorsList } from '@/entities/sensor/api/use-sensors-list'
-import { DEFAULT_PARAM_THRESHOLDS } from '@/shared/constants/thresholds'
+import { useUserProfile } from '@/entities/user/api/use-user-profile'
 import { cn } from '@/shared/lib/utils'
 
-type Tab = 'perfil' | 'alertas' | 'sensores'
+type Tab = 'perfil' | 'limites' | 'sensores'
 
 export const SettingsPage = () => {
   const [tab, setTab] = useState<Tab>('perfil')
@@ -23,14 +24,14 @@ export const SettingsPage = () => {
     <div className="p-8" style={{ maxWidth: 860 }}>
       <div className="mb-6">
         <h1 className="font-display text-3xl font-bold tracking-tight text-fg">Configurações</h1>
-        <p className="mt-1.5 text-base text-fg-muted">Gerencie seu perfil, alertas e sensores.</p>
+        <p className="mt-1.5 text-base text-fg-muted">Gerencie seu perfil, limites e sensores.</p>
       </div>
 
       <div className="mb-6 flex gap-1 rounded-xl border border-border bg-bg-raised p-1">
         {(
           [
             ['perfil', 'Perfil'],
-            ['alertas', 'Alertas'],
+            ['limites', 'Limites'],
             ['sensores', 'Sensores'],
           ] as [Tab, string][]
         ).map(([id, label]) => (
@@ -49,22 +50,37 @@ export const SettingsPage = () => {
       </div>
 
       {tab === 'perfil' && <PerfilTab />}
-      {tab === 'alertas' && <AlertasTab />}
+      {tab === 'limites' && <ThresholdsForm />}
       {tab === 'sensores' && <SensoresTab />}
     </div>
   )
 }
 
 function PerfilTab() {
-  const { user, logout } = useAuth()
+  const { logout } = useAuth()
+  const { profile, sub, isPending } = useUserProfile()
 
   return (
     <div className="flex flex-col gap-4">
-      <ProfileEditForm
-        initialName={user?.name ?? ''}
-        initialNickname={user?.nickname ?? ''}
-        email={user?.email ?? ''}
-      />
+      {isPending ? (
+        <Card tone="white" padding="lg">
+          <Skeleton className="mb-4 h-6 w-40" />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <Skeleton className="h-16" />
+            <Skeleton className="h-16" />
+            <Skeleton className="h-16 md:col-span-2" />
+          </div>
+        </Card>
+      ) : (
+        // `key` no sub: o form inicializa o estado a partir das props, então
+        // precisa remontar quando o perfil finalmente chega (ou troca de conta).
+        <ProfileEditForm
+          key={sub}
+          initialName={profile.name}
+          initialNickname={profile.nickname}
+          email={profile.email}
+        />
+      )}
 
       <Card tone="white" padding="lg">
         <Card.Header>
@@ -83,67 +99,6 @@ function PerfilTab() {
             Sair da conta
           </Button>
         </Card.Footer>
-      </Card>
-    </div>
-  )
-}
-
-const ALERT_PARAMS = [
-  { id: 'soil_moisture', label: 'Umidade do Solo', unit: '%' },
-  { id: 'soil_temperature', label: 'Temp. do Solo', unit: '°C' },
-  { id: 'air_humidity', label: 'Umidade do Ar', unit: '%' },
-  { id: 'air_temperature', label: 'Temp. do Ar', unit: '°C' },
-  { id: 'battery', label: 'Bateria', unit: '%' },
-] as const
-
-function AlertasTab() {
-  const { user } = useAuth()
-
-  return (
-    <div className="flex flex-col gap-4">
-      <Card tone="white" padding="lg">
-        <Card.Header>
-          <Card.Title as="h2">Canais de notificação</Card.Title>
-          <span className="text-xs text-fg-subtle">Em breve</span>
-        </Card.Header>
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="text-sm font-semibold text-fg">E-mail</Label>
-              <p className="text-xs text-fg-subtle">{user?.email ?? '—'}</p>
-            </div>
-            <Switch defaultChecked disabled />
-          </div>
-        </div>
-      </Card>
-
-      <Card tone="white" padding="lg">
-        <Card.Header>
-          <Card.Title as="h2">Thresholds padrão</Card.Title>
-          <span className="text-xs text-fg-subtle">Aplicado a todos os sensores</span>
-        </Card.Header>
-        <div className="flex flex-col divide-y divide-border">
-          {ALERT_PARAMS.map((s) => {
-            const t = DEFAULT_PARAM_THRESHOLDS[s.id]
-            return (
-              <div key={s.id} className="flex items-center justify-between py-3">
-                <span className="font-display text-sm font-semibold text-fg">{s.label}</span>
-                <div className="flex items-center gap-3 text-sm">
-                  {t.alertLow !== undefined && (
-                    <span className="text-fg-subtle">
-                      Mín: <strong className="text-alert-dot">{t.alertLow}{s.unit}</strong>
-                    </span>
-                  )}
-                  {t.alertHigh !== undefined && (
-                    <span className="text-fg-subtle">
-                      Máx: <strong className="text-alert-dot">{t.alertHigh}{s.unit}</strong>
-                    </span>
-                  )}
-                </div>
-              </div>
-            )
-          })}
-        </div>
       </Card>
     </div>
   )
@@ -182,16 +137,11 @@ function SensoresTab() {
             typeof s.lastReading?.battery === 'number' ? Math.round(s.lastReading.battery) : null
           const hasLocation = s.latitude !== null && s.longitude !== null
           return (
-            <div key={s.deviceId} className="flex items-center gap-4 px-6 py-4">
+            <div key={s.devEUI} className="flex items-center gap-4 px-6 py-4">
               <div className="min-w-0 flex-1">
-                <div className="font-display text-sm font-semibold text-fg">{s.name}</div>
+                <SensorNameEditor devEUI={s.devEUI} name={s.name} />
                 <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-fg-subtle">
-                  {s.deviceType && (
-                    <Badge tone="leaf" size="sm">
-                      {s.deviceType}
-                    </Badge>
-                  )}
-                  <span className="font-mono">{s.deviceId}</span>
+                  <span className="font-mono">{s.devEUI}</span>
                   {!hasLocation && (
                     <Badge tone="neutral" size="sm">
                       sem localização

@@ -7,6 +7,7 @@ import { ErrorState } from '@/shared/ui/error-state'
 import { resolveErrorVariant } from '@/shared/ui/error-state.helpers'
 import { Skeleton } from '@/shared/ui/skeleton'
 import { useSensorsList } from '@/entities/sensor/api/use-sensors-list'
+import { useThresholdsStore } from '@/shared/stores/thresholds-store'
 import { statusForParam, statusLabel, type Status } from '@/shared/constants/thresholds'
 import { cn } from '@/shared/lib/utils'
 import { ROUTES } from '@/shared/constants/routes'
@@ -46,6 +47,7 @@ export const SensorDetailPage = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const sensorsQuery = useSensorsList()
+  const thresholds = useThresholdsStore((s) => s.thresholds)
 
   if (sensorsQuery.error) {
     return (
@@ -76,7 +78,7 @@ export const SensorDetailPage = () => {
   }
 
   const sensors = sensorsQuery.data ?? []
-  const sensor = sensors.find((s) => s.deviceId === id)
+  const sensor = sensors.find((s) => s.devEUI === id)
 
   if (!sensor) {
     return (
@@ -104,7 +106,7 @@ export const SensorDetailPage = () => {
   })
 
   const overallStatus: Status = (() => {
-    const statuses = METRICS.map((m) => statusForParam(m.key, reading[m.key] ?? null))
+    const statuses = METRICS.map((m) => statusForParam(thresholds, m.key, reading[m.key] ?? null))
     if (statuses.includes('alert')) return 'alert'
     if (statuses.includes('warn')) return 'warn'
     return 'ok'
@@ -125,7 +127,7 @@ export const SensorDetailPage = () => {
         <div>
           <h1 className="font-display text-2xl font-bold text-fg">{sensor.name}</h1>
           <p className="mt-0.5 font-mono text-xs text-fg-subtle">
-            {sensor.deviceId}
+            {sensor.devEUI}
             {sensor.deviceType && ` · ${sensor.deviceType}`}
           </p>
           {sensor.lastReadingAt && (
@@ -151,7 +153,7 @@ export const SensorDetailPage = () => {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {METRICS.map((m) => {
             const val = reading[m.key] ?? null
-            const status = statusForParam(m.key, val)
+            const status = statusForParam(thresholds, m.key, val)
             const display = val !== null && val !== undefined ? (m.format ? m.format(val) : String(val)) : '—'
 
             return (

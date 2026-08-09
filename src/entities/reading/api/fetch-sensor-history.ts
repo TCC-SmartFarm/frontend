@@ -4,7 +4,9 @@ import type { SensorPayload } from "@/entities/sensor/model/types";
 export interface RawReading {
   timestamp: number;
   userId: string;
-  deviceId: string;
+  applicationId?: string;
+  devAddr: string;
+  devEUI: string;
   deviceType: string;
   name?: string;
   value: Partial<
@@ -17,11 +19,13 @@ export interface RawReading {
   >;
 }
 
+// O histórico é consultado pelo devAddr (é a tag indexada no InfluxDB), e não
+// pelo devEUI que identifica o sensor no resto do front.
 export const fetchSensorHistory = (
-  deviceId: string,
+  devAddr: string,
   days: number,
   accessToken: string,
 ): Promise<RawReading[]> =>
-  api<RawReading[]>(`/api/sensors/influx/${days}/${encodeURIComponent(deviceId)}`, {
+  api<RawReading[]>(`/api/sensors/influx/${days}/${encodeURIComponent(devAddr)}`, {
     accessToken,
   });

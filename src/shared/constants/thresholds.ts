@@ -1,28 +1,25 @@
 import type { SensorParam } from "@/entities/reading/model/types";
 import type { SensorThresholds } from "@/entities/sensor/model/types";
 
-export interface AlertThreshold {
-  low?: number;
-  high?: number;
-}
-
-export const DEFAULT_THRESHOLDS: Record<string, AlertThreshold> = {
-  battery: { low: 20 },
-  soil_moisture: { low: 30, high: 90 },
-  soil_temperature: { high: 35 },
-  air_humidity: { low: 20, high: 95 },
-  air_temperature: { low: 0, high: 40 },
-  luminosity: {},
-} as const;
-
-interface ParamThreshold {
+export interface ParamThreshold {
   warnLow?: number;
   alertLow?: number;
   warnHigh?: number;
   alertHigh?: number;
 }
 
-export const DEFAULT_PARAM_THRESHOLDS: Record<SensorParam, ParamThreshold> = {
+export type ParamThresholdMap = Record<SensorParam, ParamThreshold>;
+
+export const PARAM_THRESHOLD_FIELDS = [
+  "alertLow",
+  "warnLow",
+  "warnHigh",
+  "alertHigh",
+] as const satisfies readonly (keyof ParamThreshold)[];
+
+export type ParamThresholdField = (typeof PARAM_THRESHOLD_FIELDS)[number];
+
+export const DEFAULT_PARAM_THRESHOLDS: ParamThresholdMap = {
   soil_temperature: { warnHigh: 30, alertHigh: 35 },
   soil_moisture: { alertLow: 20, warnLow: 30, warnHigh: 80, alertHigh: 90 },
   air_humidity: { alertLow: 15, warnLow: 20, warnHigh: 90, alertHigh: 95 },
@@ -44,15 +41,40 @@ export const DEFAULT_SENSOR_THRESHOLDS: SensorThresholds = {
 
 export type Status = "ok" | "warn" | "alert";
 
-export const statusForParam = (param: SensorParam, value: number | null | undefined): Status => {
-  if (value === null || value === undefined) return "ok";
-  const t = DEFAULT_PARAM_THRESHOLDS[param];
-  if (t.alertLow !== undefined && value <= t.alertLow) return "alert";
-  if (t.alertHigh !== undefined && value >= t.alertHigh) return "alert";
-  if (t.warnLow !== undefined && value <= t.warnLow) return "warn";
-  if (t.warnHigh !== undefined && value >= t.warnHigh) return "warn";
-  return "ok";
+const EMPTY_THRESHOLD: ParamThreshold = {};
+
+/** Lado do limite que o valor estourou — define se a leitura está baixa ou alta. */
+export type BreachSide = "low" | "high" | null;
+
+export interface ParamEvaluation {
+  status: Status;
+  side: BreachSide;
+}
+
+// O mapa é argumento obrigatório (e vem primeiro) de propósito: os limites são
+// editáveis pelo usuário, e um parâmetro opcional deixaria qualquer call site
+// esquecido lendo os defaults em silêncio.
+export const evaluateParam = (
+  map: ParamThresholdMap,
+  param: SensorParam,
+  value: number | null | undefined,
+): ParamEvaluation => {
+  if (value === null || value === undefined) return { status: "ok", side: null };
+  // Guarda contra um blob antigo/corrompido no storage sem alguma das chaves.
+  const t = map[param] ?? EMPTY_THRESHOLD;
+  if (t.alertLow !== undefined && value <= t.alertLow) return { status: "alert", side: "low" };
+  if (t.alertHigh !== undefined && value >= t.alertHigh) return { status: "alert", side: "high" };
+  if (t.warnLow !== undefined && value <= t.warnLow) return { status: "warn", side: "low" };
+  if (t.warnHigh !== undefined && value >= t.warnHigh) return { status: "warn", side: "high" };
+  return { status: "ok", side: null };
 };
+
+// Derivado de evaluateParam para que status e lado nunca possam divergir.
+export const statusForParam = (
+  map: ParamThresholdMap,
+  param: SensorParam,
+  value: number | null | undefined,
+): Status => evaluateParam(map, param, value).status;
 
 export const statusLabel = (status: Status): string => {
   if (status === "alert") return "Atenção";

@@ -12,7 +12,7 @@ import type { Sensor } from "@/entities/sensor/model/types";
 interface SensorSelectorProps {
   sensors: Sensor[];
   value: string | null;
-  onChange: (deviceId: string) => void;
+  onChange: (devEUI: string) => void;
   className?: string;
 }
 
@@ -35,12 +35,12 @@ export const SensorSelector = ({ sensors, value, onChange, className }: SensorSe
         <div className="flex flex-wrap gap-2">
           {sensors.map((s) => (
             <button
-              key={s.deviceId}
+              key={s.devEUI}
               type="button"
-              onClick={() => onChange(s.deviceId)}
+              onClick={() => onChange(s.devEUI)}
               className={cn(
                 "rounded-full px-3 py-1.5 font-display text-sm font-semibold transition-all",
-                s.deviceId === value
+                s.devEUI === value
                   ? "bg-leaf-600 text-white shadow-xs"
                   : "border border-border bg-bg-raised text-fg-muted hover:border-leaf-600 hover:text-fg",
               )}
@@ -62,7 +62,7 @@ export const SensorSelector = ({ sensors, value, onChange, className }: SensorSe
         </SelectTrigger>
         <SelectContent>
           {sensors.map((s) => (
-            <SelectItem key={s.deviceId} value={s.deviceId}>
+            <SelectItem key={s.devEUI} value={s.devEUI}>
               {s.name}
             </SelectItem>
           ))}

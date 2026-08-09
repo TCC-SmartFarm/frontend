@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { ROUTES } from '@/shared/constants/routes'
+import { useUserProfile } from '@/entities/user/api/use-user-profile'
 import { cn } from '@/shared/lib/utils'
 
 interface NavItem {
@@ -59,12 +60,13 @@ function NavButton({ item }: { item: NavItem }) {
 }
 
 export const Sidebar = () => {
-  const { logout, user } = useAuth0()
+  const { logout } = useAuth0()
+  const { profile } = useUserProfile()
 
-  const initials = user?.name
-    ? user.name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()
-    : 'JS'
-  const displayName = user?.name ?? 'João da Silva'
+  const displayName = profile.name || profile.nickname || profile.email || '—'
+  const initials = profile.name
+    ? profile.name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()
+    : displayName.slice(0, 2).toUpperCase()
 
   return (
     <aside className="flex h-full w-60 shrink-0 flex-col bg-leaf-900 px-3.5 pb-4 pt-[18px] text-sand-50">

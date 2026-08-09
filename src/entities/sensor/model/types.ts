@@ -20,7 +20,17 @@ export interface SensorPayload {
 
 export interface Sensor {
   id: string;
-  deviceId: string;
+  /**
+   * Identidade do sensor no front: seleção, rotas e chaves de lista.
+   * É o mesmo identificador usado na chave do cache no Redis
+   * (userId:X:devEUI:Y:history) e na rota /api/sensors/latest/:devEUI.
+   */
+  devEUI: string;
+  /**
+   * Endereço LoRa do dispositivo. Serve só para consultar o histórico
+   * em /api/sensors/influx/:days/:devAddr — o InfluxDB é indexado por ele.
+   */
+  devAddr: string;
   name: string;
   nickname: string;
   deviceType?: string;

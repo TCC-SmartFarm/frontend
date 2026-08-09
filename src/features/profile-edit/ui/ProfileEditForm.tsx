@@ -72,7 +72,7 @@ export const ProfileEditForm = ({ initialName, initialNickname, email }: Profile
           </Label>
           <Input value={email} disabled />
           <span className="text-xs text-fg-subtle">
-            Para alterar o e-mail, entre em contato com o suporte.
+            É o e-mail de login, gerenciado pelo Auth0, e não pode ser alterado por aqui.
           </span>
         </div>
       </div>

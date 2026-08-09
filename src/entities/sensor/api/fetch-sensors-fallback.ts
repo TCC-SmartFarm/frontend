@@ -1,5 +1,5 @@
 import { fetchSensorHistory, type RawReading } from "@/entities/reading/api/fetch-sensor-history";
-import { getDeviceIdsForUser } from "@/features/auth/lib/device-id-map";
+import { fetchSensorDevices } from "./fetch-sensor-devices";
 import type { LatestMessage, LatestResponse } from "./fetch-sensors-latest";
 
 const FALLBACK_DAYS = 20;
@@ -14,8 +14,10 @@ const synthesizeFromReadings = (readings: RawReading[]): LatestMessage | null =>
   const { latitude, longitude, ...sensorValues } = latest.value;
   return {
     userId: latest.userId,
+    applicationId: latest.applicationId,
     deviceType: latest.deviceType,
-    deviceId: latest.deviceId,
+    devEUI: latest.devEUI,
+    devAddr: latest.devAddr,
     name: latest.name,
     payload: {
       ...sensorValues,
@@ -30,10 +32,12 @@ export const fetchSensorsLatestFromInflux = async (
   userId: string,
   accessToken: string,
 ): Promise<LatestResponse> => {
-  const deviceIds = getDeviceIdsForUser(userId);
+  // O cadastro vem do backend (Supabase). Antes era um mapa estático de IDs
+  // versionado aqui — que ficava desatualizado a cada sensor novo.
+  const { devices } = await fetchSensorDevices(accessToken);
   const results = await Promise.all(
-    deviceIds.map((id) =>
-      fetchSensorHistory(id, FALLBACK_DAYS, accessToken)
+    devices.map((device) =>
+      fetchSensorHistory(device.devAddr, FALLBACK_DAYS, accessToken)
         .then(synthesizeFromReadings)
         .catch(() => null),
     ),

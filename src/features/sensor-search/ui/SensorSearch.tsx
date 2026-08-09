@@ -38,7 +38,7 @@ export const SensorSearch = ({ className }: { className?: string }) => {
 
   const results = useMemo<SearchResult[]>(() => {
     const sensorResults: SearchResult[] = (sensorsQuery.data ?? [])
-      .filter((s) => matchesSearch(query, s.name, s.nickname, s.deviceId, s.deviceType))
+      .filter((s) => matchesSearch(query, s.name, s.nickname, s.devEUI, s.deviceType))
       .slice(0, MAX_SENSOR_RESULTS)
       .map((sensor) => ({ kind: "sensor" as const, sensor }));
     const paramResults: SearchResult[] = Object.entries(SENSOR_PARAMETERS)
@@ -82,8 +82,8 @@ export const SensorSearch = ({ className }: { className?: string }) => {
 
   const select = (result: SearchResult) => {
     if (result.kind === "sensor") {
-      setSelectedSensorId(result.sensor.deviceId);
-      navigate(ROUTES.DASHBOARD_SENSOR.replace(":id", result.sensor.deviceId));
+      setSelectedSensorId(result.sensor.devEUI);
+      navigate(ROUTES.DASHBOARD_SENSOR.replace(":id", result.sensor.devEUI));
     } else {
       navigate(result.meta.route);
     }
@@ -165,7 +165,7 @@ export const SensorSearch = ({ className }: { className?: string }) => {
               const showSensorsHeading = index === 0 && result.kind === "sensor";
               const showParamsHeading = index === firstParamIndex && result.kind === "param";
               return (
-                <div key={result.kind === "sensor" ? result.sensor.deviceId : result.key}>
+                <div key={result.kind === "sensor" ? result.sensor.devEUI : result.key}>
                   {(showSensorsHeading || showParamsHeading) && (
                     <div className="px-3.5 pb-1 pt-2 text-[10px] font-bold uppercase tracking-[0.1em] text-fg-subtle">
                       {showSensorsHeading ? "Sensores" : "Páginas"}
@@ -193,7 +193,7 @@ export const SensorSearch = ({ className }: { className?: string }) => {
                             {result.sensor.name}
                           </span>
                           <span className="block truncate font-mono text-[11px] text-fg-subtle">
-                            {result.sensor.deviceId}
+                            {result.sensor.devEUI}
                             {result.sensor.deviceType && ` · ${result.sensor.deviceType}`}
                           </span>
                         </span>

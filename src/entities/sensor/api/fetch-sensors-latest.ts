@@ -3,8 +3,10 @@ import type { SensorPayload } from "../model/types";
 
 export interface LatestMessage {
   userId: string;
+  applicationId?: string;
   deviceType: string;
-  deviceId: string;
+  devEUI: string;
+  devAddr: string;
   name?: string;
   payload: Partial<SensorPayload> & {
     name?: string;
