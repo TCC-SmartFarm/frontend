@@ -28,7 +28,6 @@ export const HeroSection = ({
             ["#como-funciona", "Como funciona"],
             ["#monitorar", "O que monitora"],
             ["#por-que", "Por que usar"],
-            ["#planos", "Planos"],
           ] as [string, string][]
         ).map(([href, label]) => (
           <a

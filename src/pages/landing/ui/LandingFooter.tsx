@@ -1,21 +1,13 @@
 const cols = [
   {
     title: 'Produto',
-    items: ['Como funciona', 'O que monitora', 'Planos', 'Sensores'],
-  },
-  {
-    title: 'Empresa',
-    items: ['Sobre', 'Blog', 'Comunidade', 'Contato'],
-  },
-  {
-    title: 'Suporte',
-    items: ['Central de ajuda', 'WhatsApp', 'Instalação', 'Política de privacidade'],
+    items: ['Como funciona', 'O que monitora', 'Sensores'],
   },
 ]
 
 export const LandingFooter = () => (
   <footer className="px-10 pb-10 pt-[60px]" style={{ background: '#f3eee5' }}>
-    <div className="mx-auto grid max-w-[1280px] grid-cols-[1.5fr_1fr_1fr_1fr] gap-10">
+    <div className="mx-auto flex max-w-[1280px] flex-wrap items-start justify-between gap-10">
       <div>
         <div className="flex items-center gap-2.5">
           <span className="flex size-7 rounded-full bg-leaf-600" />
@@ -44,13 +36,8 @@ export const LandingFooter = () => (
       ))}
     </div>
 
-    <div className="mx-auto mt-10 flex max-w-[1280px] items-center justify-between border-t border-sand-300/40 pt-6 text-[12.5px] text-fg-subtle">
+    <div className="mx-auto mt-10 flex max-w-[1280px] items-center border-t border-sand-300/40 pt-6 text-[12.5px] text-fg-subtle">
       <span>© 2026 SmartFarm · Feito no Brasil</span>
-      <div className="flex gap-4">
-        <a href="#" className="hover:text-fg-muted">Termos</a>
-        <a href="#" className="hover:text-fg-muted">Privacidade</a>
-        <a href="#" className="hover:text-fg-muted">Cookies</a>
-      </div>
     </div>
   </footer>
 )

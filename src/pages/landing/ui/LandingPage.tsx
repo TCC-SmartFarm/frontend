@@ -6,10 +6,8 @@ import { LandscapeBand } from "./LandscapeBand";
 import { ProblemSolution } from "./ProblemSolution";
 import { HowItWorks } from "./HowItWorks";
 import { WhatYouMonitor } from "./WhatYouMonitor";
-import { CommunityBand } from "./CommunityBand";
 import { NextGenSolutions } from "./NextGenSolutions";
 import { SustainableCard } from "./SustainableCard";
-import { PricingSection } from "./PricingSection";
 import { JoinCTA } from "./JoinCTA";
 import { LandingFooter } from "./LandingFooter";
 
@@ -40,10 +38,8 @@ export const LandingPage = () => {
       <ProblemSolution />
       <HowItWorks />
       <WhatYouMonitor />
-      <CommunityBand />
       <NextGenSolutions />
       <SustainableCard />
-      <PricingSection onGetStarted={handleLogin} />
       <JoinCTA onLogin={handleLogin} />
       <LandingFooter />
     </div>
