@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { ApiError } from "@/shared/api/api-error";
 import { useAuthToken } from "@/features/auth/lib/use-auth-token";
 import { useUserId } from "@/features/auth/lib/use-user-id";
 import { useSensorNicknamesStore } from "@/shared/stores/sensor-nicknames-store";
@@ -37,6 +38,14 @@ export const useSensorsList = () => {
           return adaptLatestToSensors(response);
         }
       } catch (err) {
+        // 404 é a resposta da API para "este usuário não tem leitura no cache".
+        // É o caso normal de conta recém-criada, não uma falha: sem este
+        // desvio, o console acusava erro e a tela mostrava estado de erro em
+        // vez de "sem sensores cadastrados". Os demais status seguem para o
+        // fallback do Influx, que existe para cache vazio com histórico presente.
+        if (ApiError.isApiError(err) && err.status === 404) {
+          return [];
+        }
         console.warn("[useSensorsList] /all falhou, caindo no influx:", err);
       }
       const fallback = await fetchSensorsLatestFromInflux(userId, token);

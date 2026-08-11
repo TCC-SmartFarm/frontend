@@ -3,6 +3,7 @@ import { ROUTES } from "@/shared/constants/routes";
 import { ProtectedRoute } from "./protected-route";
 import { DashboardLayout } from "./layouts/dashboard-layout";
 import { LandingPage } from "@/pages/landing/ui/LandingPage";
+import { CallbackPage } from "@/pages/callback/ui/CallbackPage";
 import { DashboardMapPage } from "@/pages/dashboard-map/ui/DashboardMapPage";
 import { SoilTempPage } from "@/pages/soil-temp/ui/SoilTempPage";
 import { SoilMoisturePage } from "@/pages/soil-moisture/ui/SoilMoisturePage";
@@ -18,6 +19,9 @@ export const AppRoutes = () => {
   return (
     <Routes>
       <Route path={ROUTES.LANDING} element={<LandingPage />} />
+      {/* Pública de propósito: o usuário ainda não está autenticado quando cai
+          aqui, e o ProtectedRoute o mandaria de volta ao login no meio do fluxo. */}
+      <Route path={ROUTES.CALLBACK} element={<CallbackPage />} />
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
           <Route path={ROUTES.DASHBOARD} element={<Navigate to={ROUTES.DASHBOARD_MAP} replace />} />
