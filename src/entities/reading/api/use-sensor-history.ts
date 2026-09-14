@@ -6,9 +6,10 @@ import { historyQueryOptions, type HistoryCache } from "./history-query-options"
 import type { RawReading } from "./fetch-sensor-history";
 import { filterReadingsByDays } from "../lib/filter-readings-by-days";
 
-// Recebe o devAddr (identificador do histórico no InfluxDB), não o devEUI.
-// O cache guarda o histórico completo; `days` só recorta localmente.
-export const useSensorHistory = (devAddr: string | null, days: number) => {
+// Recebe o devEUI: é por ele que a rota /api/sensors/influx/:userId/:days/:devEUI
+// filtra no Influx. O cache guarda o histórico completo; `days` só recorta
+// localmente.
+export const useSensorHistory = (devEUI: string | null, days: number) => {
   const { getToken } = useAuthToken();
   const { userId } = useUserId();
 
@@ -18,7 +19,7 @@ export const useSensorHistory = (devAddr: string | null, days: number) => {
   );
 
   return useQuery({
-    ...historyQueryOptions(devAddr, userId, getToken),
+    ...historyQueryOptions(devEUI, userId, getToken),
     select,
   });
 };

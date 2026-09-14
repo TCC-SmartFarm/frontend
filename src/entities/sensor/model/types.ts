@@ -27,8 +27,9 @@ export interface Sensor {
    */
   devEUI: string;
   /**
-   * Endereço LoRa do dispositivo. Serve só para consultar o histórico
-   * em /api/sensors/influx/:days/:devAddr — o InfluxDB é indexado por ele.
+   * Endereço LoRa atribuído pelo network server. Vem no envelope e fica aqui
+   * por completude — **não** é usado em requisição nenhuma: desde a `main` de
+   * 09/09/2026 o histórico também é consultado pelo devEUI.
    */
   devAddr: string;
   name: string;

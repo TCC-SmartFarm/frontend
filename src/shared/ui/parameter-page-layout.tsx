@@ -127,17 +127,18 @@ export const ParameterPageLayout = ({ config }: { config: ParamConfig }) => {
   const thresholds = useThresholdsStore((s) => s.thresholds)
   const days = periodToDays(period)
 
-  // O sensor é selecionado pelo devEUI, mas o histórico é consultado pelo
-  // devAddr — precisa resolver um no outro antes de chamar os hooks.
+  // Seleção e histórico usam o mesmo identificador: a rota
+  // /api/sensors/influx/:userId/:days/:devEUI filtra pelo devEUI. O devAddr
+  // (`d99eefe3`) é outra tag da mesma série e devolveria lista vazia.
   const selected = sensors.find((s) => s.devEUI === selectedId) ?? null
-  const selectedDevAddr = selected?.devAddr ?? null
+  const selectedDevEUI = selected?.devEUI ?? null
 
-  const historyQuery = useSensorHistory(selectedDevAddr, days)
+  const historyQuery = useSensorHistory(selectedDevEUI, days)
   const readings = useMemo(() => historyQuery.data ?? [], [historyQuery.data])
 
   // Enquanto a query não assenta, `undefined` = "ainda não sabemos": passar 0
   // faria todos os botões de período nascerem bloqueados a cada carregamento.
-  const availabilityQuery = useHistoryAvailability(selectedDevAddr)
+  const availabilityQuery = useHistoryAvailability(selectedDevEUI)
   const availableDays = availabilityQuery.isSuccess ? availabilityQuery.data : undefined
 
   // Se o período escolhido não tem dados que o sustentem, cai para "Máximo".

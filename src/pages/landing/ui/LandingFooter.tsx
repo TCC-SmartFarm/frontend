@@ -1,3 +1,5 @@
+import { Logo } from '@/shared/ui/logo'
+
 const cols = [
   {
     title: 'Produto',
@@ -10,7 +12,7 @@ export const LandingFooter = () => (
     <div className="mx-auto flex max-w-[1280px] flex-wrap items-start justify-between gap-10">
       <div>
         <div className="flex items-center gap-2.5">
-          <span className="flex size-7 rounded-full bg-leaf-600" />
+          <Logo size={24} variant="mark" />
           <span className="font-display text-[18px] font-bold tracking-tight text-fg">SmartFarm</span>
         </div>
         <p className="mt-3.5 max-w-[280px] text-[13.5px] leading-relaxed text-fg-muted">

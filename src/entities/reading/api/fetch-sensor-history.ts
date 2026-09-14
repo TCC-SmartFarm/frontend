@@ -5,9 +5,9 @@ export interface RawReading {
   timestamp: number;
   userId: string;
   applicationId?: string;
-  devAddr: string;
+  devAddr?: string;
   devEUI: string;
-  deviceType: string;
+  deviceType?: string;
   name?: string;
   value: Partial<
     {
@@ -15,17 +15,30 @@ export interface RawReading {
     } & {
       latitude: number | null;
       longitude: number | null;
+      /** Flag de integridade do pacote LoRa. Vem como boolean, não é plotada. */
+      validity: boolean | null;
     }
   >;
 }
 
-// O histórico é consultado pelo devAddr (é a tag indexada no InfluxDB), e não
-// pelo devEUI que identifica o sensor no resto do front.
-export const fetchSensorHistory = (
-  devAddr: string,
+/**
+ * Histórico de um sensor no InfluxDB.
+ *
+ * O identificador é o **devEUI**, não o devAddr: a rota da `main` filtra por
+ * `r["devEUI"] == ...`. Consultar pelo devAddr (`d99eefe3`) devolve lista
+ * vazia, porque essa é outra tag da mesma série.
+ *
+ * Com `var slice []T` sem append, o Go serializa `null` em vez de `[]`. Por
+ * isso o `?? []`: sem ele, o `.sort()` de quem consome estoura em sensor sem
+ * histórico.
+ */
+export const fetchSensorHistory = async (
+  userId: string,
+  devEUI: string,
   days: number,
   accessToken: string,
-): Promise<RawReading[]> =>
-  api<RawReading[]>(`/api/sensors/influx/${days}/${encodeURIComponent(devAddr)}`, {
-    accessToken,
-  });
+): Promise<RawReading[]> => {
+  const path = `/api/sensors/influx/${encodeURIComponent(userId)}/${days}/${encodeURIComponent(devEUI)}`;
+  const readings = await api<RawReading[] | null>(path, { accessToken });
+  return readings ?? [];
+};

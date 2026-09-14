@@ -1,6 +1,7 @@
 import { cn } from "@/shared/lib/utils";
 import { Alert } from "@/shared/ui/alert";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, LogIn } from "lucide-react";
+import { Logo } from "@/shared/ui/logo"
 
 interface HeroSectionProps {
   onLogin: () => void;
@@ -15,38 +16,64 @@ export const HeroSection = ({
 }: HeroSectionProps) => (
   <>
     {/* Floating pill nav */}
-    <nav className="sticky top-4 z-30 flex justify-center px-6">
-      <div className="flex items-center gap-1 rounded-full border border-white/70 bg-white/80 px-2 py-2 shadow-md backdrop-blur-xl">
-        <div className="flex items-center gap-2 border-r border-sand-200/60 pr-4">
-          <span className="flex size-5 rounded-full bg-leaf-600" />
+    <nav className="sticky top-3 z-30 flex justify-center px-4 md:top-4 md:px-6">
+      {/*
+        No celular a barra é logo + botão de entrar, e nada mais. Os três links
+        de âncora ficavam em três linhas num aparelho estreito, empurrando a
+        pílula para ~140px de altura e cortando o "Entrar" na borda direita.
+        Eles não fazem falta ali: a landing é uma página só, rolável.
+
+        O corte é em `md` (768px), não em `sm`: marca, três links e botão somam
+        ~580px, que cabem em 640px no papel mas ficam espremidos de verdade.
+      */}
+      <div
+        className={cn(
+          "flex w-full items-center justify-between gap-1 rounded-full border border-white/70",
+          "bg-white/80 px-2 py-1.5 shadow-md backdrop-blur-xl",
+          "md:w-auto md:justify-start md:py-2",
+        )}
+      >
+        <div className="flex items-center gap-2 pl-1 md:border-r md:border-sand-200/60 md:pl-0 md:pr-4">
+          <Logo size={20} variant="mark" />
           <span className="font-display text-[15px] font-bold tracking-tight text-fg">
             SmartFarm
           </span>
         </div>
-        {(
-          [
-            ["#como-funciona", "Como funciona"],
-            ["#monitorar", "O que monitora"],
-            ["#por-que", "Por que usar"],
-          ] as [string, string][]
-        ).map(([href, label]) => (
-          <a
-            key={href}
-            href={href}
-            className="rounded-full px-3.5 py-1.5 text-[13.5px] font-medium text-fg-muted transition-colors hover:text-fg"
-          >
-            {label}
-          </a>
-        ))}
+
+        <div className="hidden items-center gap-1 md:flex">
+          {(
+            [
+              ["#como-funciona", "Como funciona"],
+              ["#monitorar", "O que monitora"],
+              ["#por-que", "Por que usar"],
+            ] as [string, string][]
+          ).map(([href, label]) => (
+            <a
+              key={href}
+              href={href}
+              className="rounded-full px-3.5 py-1.5 text-[13.5px] font-medium text-fg-muted transition-colors hover:text-fg"
+            >
+              {label}
+            </a>
+          ))}
+        </div>
+
         <button
           onClick={onLogin}
           disabled={isLoading}
+          // aria-label porque no celular o botão é só o ícone: sem ele o leitor
+          // de tela anuncia um botão sem nome.
+          aria-label="Entrar"
+          aria-busy={isLoading}
           className={cn(
-            "ml-1 rounded-full px-[18px] py-2 font-display text-[13.5px] font-semibold text-white transition-all",
+            "grid size-9 shrink-0 place-items-center rounded-full font-display text-[13.5px]",
+            "font-semibold text-white transition-all",
             "bg-leaf-900 hover:bg-leaf-800 disabled:opacity-50",
+            "md:ml-1 md:size-auto md:px-[18px] md:py-2",
           )}
         >
-          {isLoading ? "Carregando…" : "Entrar"}
+          <LogIn className="size-[18px] md:hidden" aria-hidden />
+          <span className="hidden md:inline">{isLoading ? "Carregando…" : "Entrar"}</span>
         </button>
       </div>
     </nav>

@@ -15,6 +15,7 @@ import type { LucideIcon } from 'lucide-react'
 import { ROUTES } from '@/shared/constants/routes'
 import { useUserProfile } from '@/entities/user/api/use-user-profile'
 import { cn } from '@/shared/lib/utils'
+import { Logo } from '@/shared/ui/logo'
 
 interface NavItem {
   to: string
@@ -72,11 +73,7 @@ export const Sidebar = () => {
     <aside className="flex h-full w-60 shrink-0 flex-col bg-leaf-900 px-3.5 pb-4 pt-[18px] text-sand-50">
       {/* Logo */}
       <div className="mb-4 flex items-center gap-2.5 px-2 pb-1">
-        <span className="flex size-[30px] items-center justify-center rounded-full bg-leaf-500">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" aria-hidden>
-            <path d="M14 20a7 7 0 0 1-7-7c0-4 3-6 9-11-4 4-3 9 1 9a5 5 0 0 1-3 9z" />
-          </svg>
-        </span>
+        <Logo size={26} variant="mark" />
         <span className="font-display text-[18px] font-bold tracking-tight text-white">SmartFarm</span>
       </div>
 

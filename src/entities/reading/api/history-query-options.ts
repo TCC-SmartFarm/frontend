@@ -1,3 +1,4 @@
+import { isMockDevice, buildMockHistory } from "@/entities/sensor/lib/mock-sensors";
 import { readingKeys } from "./query-keys";
 import { fetchSensorHistory, type RawReading } from "./fetch-sensor-history";
 
@@ -7,7 +8,7 @@ export interface HistoryCache {
 
 // Janela ÚNICA de busca: o histórico é baixado inteiro uma vez por sensor e os
 // períodos do gráfico são recortes locais desse cache. Isso mantém a queryFn
-// pura em relação à queryKey (que só tem devAddr + userId) e faz a troca de
+// pura em relação à queryKey (que só tem devEUI + userId) e faz a troca de
 // período não disparar request nenhuma.
 //
 // Estes são os dois botões de ajuste caso o volume de dados cresça — quando o
@@ -19,17 +20,24 @@ export const HISTORY_STALE_MS = 30 * 60 * 1000;
 // chave com opções divergentes teriam comportamento dependente de qual montou
 // primeiro — por isso queryFn/staleTime/enabled vêm daqui, e só o `select` varia.
 export const historyQueryOptions = (
-  devAddr: string | null,
+  devEUI: string | null,
   userId: string,
   getToken: () => Promise<string>,
 ) => ({
-  queryKey: readingKeys.history(devAddr ?? "__none__", userId),
-  enabled: !!devAddr,
+  queryKey: readingKeys.history(devEUI ?? "__none__", userId),
+  enabled: !!devEUI,
   staleTime: HISTORY_STALE_MS,
   queryFn: async (): Promise<HistoryCache> => {
-    if (!devAddr) return { readings: [] };
+    if (!devEUI) return { readings: [] };
+
+    // Sensor de demonstração: a série é gerada no navegador, já em ordem
+    // crescente, e não passa pela API.
+    if (isMockDevice(devEUI)) {
+      return { readings: buildMockHistory(devEUI) };
+    }
+
     const token = await getToken();
-    const readings = await fetchSensorHistory(devAddr, HISTORY_FETCH_DAYS, token);
+    const readings = await fetchSensorHistory(userId, devEUI, HISTORY_FETCH_DAYS, token);
     // Ordem crescente é pré-requisito da busca binária do filtro e do cálculo
     // de disponibilidade, que assumem readings[0] como a leitura mais antiga.
     readings.sort((a, b) => a.timestamp - b.timestamp);

@@ -11,12 +11,12 @@ const selectAvailableDays = (cache: HistoryCache): number =>
 
 // Compartilha a query com useSensorHistory (mesma chave, mesma queryFn) e só
 // projeta outro recorte: quantos dias de dados o sensor realmente tem.
-export const useHistoryAvailability = (devAddr: string | null) => {
+export const useHistoryAvailability = (devEUI: string | null) => {
   const { getToken } = useAuthToken();
   const { userId } = useUserId();
 
   return useQuery({
-    ...historyQueryOptions(devAddr, userId, getToken),
+    ...historyQueryOptions(devEUI, userId, getToken),
     select: selectAvailableDays,
   });
 };

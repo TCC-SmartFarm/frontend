@@ -1,13 +1,12 @@
 import { useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ApiError } from "@/shared/api/api-error";
 import { useAuthToken } from "@/features/auth/lib/use-auth-token";
 import { useUserId } from "@/features/auth/lib/use-user-id";
 import { useSensorNicknamesStore } from "@/shared/stores/sensor-nicknames-store";
 import { sensorKeys } from "./query-keys";
-import { fetchSensorsLatest } from "./fetch-sensors-latest";
-import { fetchSensorsLatestFromInflux } from "./fetch-sensors-fallback";
+import { collectSensorMessages } from "./collect-sensor-messages";
 import { adaptLatestToSensors } from "./adapters";
+import { buildMockSensors } from "../lib/mock-sensors";
 import type { Sensor } from "../model/types";
 
 // Sobrescreve `name` (o campo que toda a UI exibe) e preserva `nickname` com o
@@ -15,6 +14,21 @@ import type { Sensor } from "../model/types";
 // de fábrica mesmo depois de renomeado.
 const applyNicknames = (sensors: Sensor[], nicknames: Record<string, string>): Sensor[] =>
   sensors.map((s) => (nicknames[s.devEUI] ? { ...s, name: nicknames[s.devEUI] } : s));
+
+/**
+ * Sensores vindos da API. Nunca lança: com a API inteira fora do ar o painel
+ * continua de pé com os sensores de demonstração, em vez de tela de erro.
+ */
+const fetchApiSensors = async (userId: string, token: string): Promise<Sensor[]> => {
+  try {
+    const leituras = await collectSensorMessages(userId, token);
+    if (leituras.length === 0) return [];
+    return adaptLatestToSensors({ leituras, total_dispositivos: leituras.length, userId });
+  } catch (err) {
+    console.warn("[useSensorsList] nenhuma rota de sensores respondeu:", err);
+    return [];
+  }
+};
 
 export const useSensorsList = () => {
   const { getToken, isAuthenticated } = useAuthToken();
@@ -31,27 +45,24 @@ export const useSensorsList = () => {
   return useQuery({
     queryKey: [...sensorKeys.list(), userId],
     queryFn: async () => {
-      const token = await getToken();
+      // Os de demonstração vêm primeiro, e são montados ANTES de pedir o token.
+      // Eles não dependem de rede nem de Auth0: se o getToken falhar (refresh
+      // token ausente, sessão expirada), o painel ainda abre com eles em vez de
+      // cair na tela de erro. São também os únicos com coordenada, então é o
+      // que o mapa consegue plotar enquanto o payload LoRa não traz lat/long.
+      const mockSensors = buildMockSensors();
+
+      let token: string;
       try {
-        const response = await fetchSensorsLatest(token);
-        if (response.leituras && response.leituras.length > 0) {
-          return adaptLatestToSensors(response);
-        }
+        token = await getToken();
       } catch (err) {
-        // 404 é a resposta da API para "este usuário não tem leitura no cache".
-        // É o caso normal de conta recém-criada, não uma falha: sem este
-        // desvio, o console acusava erro e a tela mostrava estado de erro em
-        // vez de "sem sensores cadastrados". Os demais status seguem para o
-        // fallback do Influx, que existe para cache vazio com histórico presente.
-        if (ApiError.isApiError(err) && err.status === 404) {
-          return [];
-        }
-        console.warn("[useSensorsList] /all falhou, caindo no influx:", err);
+        console.warn("[useSensorsList] sem token de acesso, só demonstração:", err);
+        return mockSensors;
       }
-      const fallback = await fetchSensorsLatestFromInflux(userId, token);
-      return adaptLatestToSensors(fallback);
+
+      return [...mockSensors, ...(await fetchApiSensors(userId, token))];
     },
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && !!userId,
     staleTime: 5 * 60 * 1000,
     select,
   });
