@@ -9,7 +9,6 @@ const toNumberOrNull = (v: unknown): number | null => {
 };
 
 const SENSOR_VALUE_KEYS: (keyof SensorPayload)[] = [
-  "soil_temperature",
   "soil_moisture",
   "air_humidity",
   "luminosity",

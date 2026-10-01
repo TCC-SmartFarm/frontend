@@ -1,4 +1,3 @@
-import { isMockDevice, buildMockHistory } from "@/entities/sensor/lib/mock-sensors";
 import { readingKeys } from "./query-keys";
 import { fetchSensorHistory, type RawReading } from "./fetch-sensor-history";
 
@@ -30,12 +29,10 @@ export const historyQueryOptions = (
   queryFn: async (): Promise<HistoryCache> => {
     if (!devEUI) return { readings: [] };
 
-    // Sensor de demonstração: a série é gerada no navegador, já em ordem
-    // crescente, e não passa pela API.
-    if (isMockDevice(devEUI)) {
-      return { readings: buildMockHistory(devEUI) };
-    }
-
+    // Havia aqui um desvio para uma série gerada no navegador quando o devEUI
+    // era de demonstração. Saiu junto com os mocks em 17/09/2026: os três
+    // sensores do simulador voltaram a chegar pela API, e manter o desvio faria
+    // o gráfico mostrar dado sintético enquanto o card mostrava o do pipeline.
     const token = await getToken();
     const readings = await fetchSensorHistory(userId, devEUI, HISTORY_FETCH_DAYS, token);
     // Ordem crescente é pré-requisito da busca binária do filtro e do cálculo

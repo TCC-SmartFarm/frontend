@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Droplets, Thermometer, Sun, Battery, Wind, CloudRain } from 'lucide-react'
+import { ArrowLeft, Droplets, Sun, Battery, Wind, CloudRain } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Badge } from '@/shared/ui/badge'
 import { EmptyState } from '@/shared/ui/empty-state'
@@ -24,7 +24,6 @@ interface MetricDef {
 
 const METRICS: MetricDef[] = [
   { key: 'soil_moisture', label: 'Umidade do solo', unit: '%', icon: Droplets, format: (v) => Math.round(v).toString() },
-  { key: 'soil_temperature', label: 'Temp. do solo', unit: '°C', icon: Thermometer, format: (v) => v.toFixed(1) },
   { key: 'air_humidity', label: 'Umidade do ar', unit: '%', icon: CloudRain, format: (v) => Math.round(v).toString() },
   { key: 'luminosity', label: 'Luminosidade', unit: 'lx', icon: Sun, format: (v) => Math.round(v).toLocaleString('pt-BR') },
   { key: 'air_temperature', label: 'Temp. do ar', unit: '°C', icon: Wind, format: (v) => v.toFixed(1) },

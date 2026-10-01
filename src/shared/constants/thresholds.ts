@@ -20,7 +20,6 @@ export const PARAM_THRESHOLD_FIELDS = [
 export type ParamThresholdField = (typeof PARAM_THRESHOLD_FIELDS)[number];
 
 export const DEFAULT_PARAM_THRESHOLDS: ParamThresholdMap = {
-  soil_temperature: { warnHigh: 30, alertHigh: 35 },
   soil_moisture: { alertLow: 20, warnLow: 30, warnHigh: 80, alertHigh: 90 },
   air_humidity: { alertLow: 15, warnLow: 20, warnHigh: 90, alertHigh: 95 },
   air_temperature: { alertLow: 0, warnLow: 5, warnHigh: 35, alertHigh: 40 },
@@ -29,7 +28,6 @@ export const DEFAULT_PARAM_THRESHOLDS: ParamThresholdMap = {
 };
 
 export const DEFAULT_SENSOR_THRESHOLDS: SensorThresholds = {
-  soil_temperature_high: 35,
   soil_moisture_low: 30,
   soil_moisture_high: 90,
   air_humidity_low: 20,

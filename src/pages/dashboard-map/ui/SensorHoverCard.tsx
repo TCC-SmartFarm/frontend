@@ -13,7 +13,6 @@ const PARAM_SUBJECT: Record<SensorParam, string> = {
   battery: 'A bateria',
   soil_moisture: 'A umidade do solo',
   air_humidity: 'A umidade do ar',
-  soil_temperature: 'A temperatura do solo',
   air_temperature: 'A temperatura do ar',
   luminosity: 'A luminosidade',
 }

@@ -6,7 +6,6 @@ import { useSensorNicknamesStore } from "@/shared/stores/sensor-nicknames-store"
 import { sensorKeys } from "./query-keys";
 import { collectSensorMessages } from "./collect-sensor-messages";
 import { adaptLatestToSensors } from "./adapters";
-import { buildMockSensors } from "../lib/mock-sensors";
 import type { Sensor } from "../model/types";
 
 // Sobrescreve `name` (o campo que toda a UI exibe) e preserva `nickname` com o
@@ -45,22 +44,30 @@ export const useSensorsList = () => {
   return useQuery({
     queryKey: [...sensorKeys.list(), userId],
     queryFn: async () => {
-      // Os de demonstração vêm primeiro, e são montados ANTES de pedir o token.
-      // Eles não dependem de rede nem de Auth0: se o getToken falhar (refresh
-      // token ausente, sessão expirada), o painel ainda abre com eles em vez de
-      // cair na tela de erro. São também os únicos com coordenada, então é o
-      // que o mapa consegue plotar enquanto o payload LoRa não traz lat/long.
-      const mockSensors = buildMockSensors();
-
+      // Havia aqui uma lista de sensores de demonstração gerada no navegador,
+      // somada à da API. Ela existia porque o `sensor-simulator` estava órfão:
+      // publicava no broker MQTT próprio e ninguém escutava. Deixou de ser
+      // verdade em 17/09/2026 — a VM voltou com a imagem do `mqtt-sub` que lê
+      // aquele broker, então `1e23a01`, `1e23a02` e `1e23a03` chegam pela API,
+      // com dado que atravessou RabbitMQ, Redis e InfluxDB de fato.
+      //
+      // Mantê-la duplicava os três: sete cards no painel e seis pins no mapa,
+      // sobrepostos dois a dois nas mesmas coordenadas. Entre exibir a série
+      // sintética e a que passou pelo pipeline, vale a segunda — é a que prova
+      // que a arquitetura funciona.
       let token: string;
       try {
         token = await getToken();
       } catch (err) {
-        console.warn("[useSensorsList] sem token de acesso, só demonstração:", err);
-        return mockSensors;
+        // Sem token não há o que buscar. Devolve lista vazia em vez de lançar:
+        // o painel abre no estado vazio, não na tela de erro. Era este o
+        // amortecedor que os sensores de demonstração davam de graça ao
+        // `Missing Refresh Token`, e que agora depende deste catch.
+        console.warn("[useSensorsList] sem token de acesso:", err);
+        return [];
       }
 
-      return [...mockSensors, ...(await fetchApiSensors(userId, token))];
+      return fetchApiSensors(userId, token);
     },
     enabled: isAuthenticated && !!userId,
     staleTime: 5 * 60 * 1000,

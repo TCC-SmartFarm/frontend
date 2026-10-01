@@ -5,7 +5,6 @@ import { DashboardLayout } from "./layouts/dashboard-layout";
 import { LandingPage } from "@/pages/landing/ui/LandingPage";
 import { CallbackPage } from "@/pages/callback/ui/CallbackPage";
 import { DashboardMapPage } from "@/pages/dashboard-map/ui/DashboardMapPage";
-import { SoilTempPage } from "@/pages/soil-temp/ui/SoilTempPage";
 import { SoilMoisturePage } from "@/pages/soil-moisture/ui/SoilMoisturePage";
 import { AirHumidityPage } from "@/pages/air-humidity/ui/AirHumidityPage";
 import { LuminosityPage } from "@/pages/luminosity/ui/LuminosityPage";
@@ -26,7 +25,6 @@ export const AppRoutes = () => {
         <Route element={<DashboardLayout />}>
           <Route path={ROUTES.DASHBOARD} element={<Navigate to={ROUTES.DASHBOARD_MAP} replace />} />
           <Route path={ROUTES.DASHBOARD_MAP} element={<DashboardMapPage />} />
-          <Route path={ROUTES.DASHBOARD_SOIL_TEMP} element={<SoilTempPage />} />
           <Route path={ROUTES.DASHBOARD_SOIL_MOISTURE} element={<SoilMoisturePage />} />
           <Route path={ROUTES.DASHBOARD_AIR_HUMIDITY} element={<AirHumidityPage />} />
           <Route path={ROUTES.DASHBOARD_LUMINOSITY} element={<LuminosityPage />} />

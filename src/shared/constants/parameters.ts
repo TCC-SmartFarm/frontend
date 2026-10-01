@@ -1,5 +1,4 @@
 import {
-  Thermometer,
   Droplets,
   CloudRain,
   Sun,
@@ -17,13 +16,6 @@ export interface ParameterMeta {
 }
 
 export const SENSOR_PARAMETERS: Record<string, ParameterMeta> = {
-  soil_temperature: {
-    label: "Temperatura do Solo",
-    unit: "°C",
-    icon: Thermometer,
-    color: "#e74c3c",
-    route: "/dashboard/soil-temp",
-  },
   soil_moisture: {
     label: "Umidade do Solo",
     unit: "%",

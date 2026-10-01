@@ -1,4 +1,4 @@
-import { Droplets, Thermometer, Sun, Battery, Wind, CloudRain } from 'lucide-react'
+import { Droplets, Sun, Battery, Wind, CloudRain } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { SensorParam } from '@/entities/reading/model/types'
 
@@ -16,7 +16,6 @@ export interface MetricDef {
  */
 export const METRICS: MetricDef[] = [
   { key: 'soil_moisture', label: 'Umidade solo', unit: '%', icon: Droplets },
-  { key: 'soil_temperature', label: 'Temp. solo', unit: '°C', icon: Thermometer },
   { key: 'air_humidity', label: 'Umidade ar', unit: '%', icon: CloudRain },
   {
     // Luz de dia claro passa de 90.000 lx e "98.765" estoura o quadradinho.

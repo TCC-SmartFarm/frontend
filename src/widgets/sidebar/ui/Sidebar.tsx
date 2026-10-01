@@ -2,7 +2,6 @@ import { NavLink } from 'react-router-dom'
 import { useAuth0 } from '@auth0/auth0-react'
 import {
   Map,
-  Thermometer,
   Droplets,
   CloudRain,
   Sun,
@@ -30,7 +29,6 @@ const topItems: NavItem[] = [
 
 const paramItems: NavItem[] = [
   { to: ROUTES.DASHBOARD_SOIL_MOISTURE, label: 'Umidade do solo', icon: Droplets },
-  { to: ROUTES.DASHBOARD_SOIL_TEMP,     label: 'Temp. do solo',   icon: Thermometer },
   { to: ROUTES.DASHBOARD_AIR_HUMIDITY,  label: 'Umidade do ar',   icon: CloudRain },
   { to: ROUTES.DASHBOARD_LUMINOSITY,    label: 'Luminosidade',    icon: Sun },
   { to: ROUTES.DASHBOARD_AIR_TEMP,      label: 'Temp. do ar',     icon: Wind },

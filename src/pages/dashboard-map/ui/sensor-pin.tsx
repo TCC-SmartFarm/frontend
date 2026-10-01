@@ -53,7 +53,6 @@ const pulseColor = (tone: PinTone): string =>
 export const PIN_PARAM_PRIORITY: SensorParam[] = [
   'battery',
   'soil_moisture',
-  'soil_temperature',
   'air_temperature',
   'air_humidity',
   'luminosity',

@@ -1,5 +1,4 @@
 export interface SensorThresholds {
-  soil_temperature_high?: number;
   soil_moisture_low?: number;
   soil_moisture_high?: number;
   air_humidity_low?: number;
@@ -10,7 +9,6 @@ export interface SensorThresholds {
 }
 
 export interface SensorPayload {
-  soil_temperature: number;
   soil_moisture: number;
   air_humidity: number;
   luminosity: number;

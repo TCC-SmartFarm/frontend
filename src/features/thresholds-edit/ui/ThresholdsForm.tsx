@@ -18,7 +18,6 @@ import type { SensorParam } from '@/entities/reading/model/types'
 // Mesma ordem da sidebar, para o usuário achar o parâmetro onde espera.
 const PARAM_ORDER: SensorParam[] = [
   'soil_moisture',
-  'soil_temperature',
   'air_humidity',
   'luminosity',
   'air_temperature',

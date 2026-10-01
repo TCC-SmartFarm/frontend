@@ -1,5 +1,4 @@
 export type SensorParam =
-  | "soil_temperature"
   | "soil_moisture"
   | "air_humidity"
   | "luminosity"
@@ -9,7 +8,6 @@ export type SensorParam =
 export interface Reading {
   devEUI: string;
   timestamp: number;
-  soil_temperature: number | null;
   soil_moisture: number | null;
   air_humidity: number | null;
   luminosity: number | null;
