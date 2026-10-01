@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import L from 'leaflet'
+import { Plus } from 'lucide-react'
 import { Badge } from '@/shared/ui/badge'
 import { EmptyState } from '@/shared/ui/empty-state'
 import { ErrorState } from '@/shared/ui/error-state'
@@ -8,6 +9,7 @@ import { resolveErrorVariant } from '@/shared/ui/error-state.helpers'
 import { SensorListSkeleton } from '@/shared/ui/sensor-list-skeleton'
 import { Skeleton } from '@/shared/ui/skeleton'
 import { useSensorsList } from '@/entities/sensor/api/use-sensors-list'
+import { AddSensorDialog } from '@/features/sensor-register/ui/AddSensorDialog'
 import { env } from '@/shared/config/env'
 import { useSelectedSensorStore } from '@/shared/stores/selected-sensor-store'
 import { useThresholdsStore } from '@/shared/stores/thresholds-store'
@@ -50,6 +52,22 @@ export const DashboardMapPage = () => {
   const selectedId = useSelectedSensorStore((s) => s.selectedSensorId)
   const setSelectedId = useSelectedSensorStore((s) => s.setSelectedSensorId)
   const thresholds = useThresholdsStore((s) => s.thresholds)
+
+  const [cadastroAberto, setCadastroAberto] = useState(false)
+
+  // Definido uma vez e usado em dois ramos: com sensores e sem nenhum. Quem
+  // ainda nao tem sensor e justamente quem mais precisa do botao.
+  const botaoAdicionarSensor = (
+    <div className="shrink-0 p-3 pb-0">
+      <button
+        onClick={() => setCadastroAberto(true)}
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-leaf-700 py-2.5 font-display text-sm font-semibold text-white shadow-xs transition-colors hover:bg-leaf-600 active:scale-[0.98]"
+      >
+        <Plus size={15} strokeWidth={2.5} aria-hidden />
+        Adicionar sensor
+      </button>
+    </div>
+  )
 
   // Um sensor fica offline pela passagem do tempo, sem nenhum dado novo chegar;
   // sem este tick o pin continuaria pulsando até o próximo refetch da lista.
@@ -255,20 +273,15 @@ export const DashboardMapPage = () => {
             </div>
           </>
         ) : sensors.length === 0 ? (
-          <div className="flex h-full items-center justify-center p-4">
-            <EmptyState variant="no-sensors" />
-          </div>
+          <>
+            {botaoAdicionarSensor}
+            <div className="flex flex-1 items-center justify-center p-4">
+              <EmptyState variant="no-sensors" />
+            </div>
+          </>
         ) : (
           <>
-            {/* Cadastro de sensor ainda não implementado no back-end (não há POST /api/sensors).
-                O sensor é provisionado pelo app mobile; ao reativar, reimportar `Plus` do lucide-react.
-            <div className="shrink-0 p-3 pb-0">
-              <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-leaf-700 py-2.5 font-display text-sm font-semibold text-white shadow-xs transition-colors hover:bg-leaf-600 active:scale-[0.98]">
-                <Plus size={15} strokeWidth={2.5} aria-hidden />
-                Adicionar sensor
-              </button>
-            </div>
-            */}
+            {botaoAdicionarSensor}
 
             {selected && (
               <div className="shrink-0 border-b border-border/60 px-4 pb-4 pt-3.5">
@@ -411,6 +424,8 @@ export const DashboardMapPage = () => {
           </>
         )}
       </div>
+
+      <AddSensorDialog open={cadastroAberto} onOpenChange={setCadastroAberto} />
     </div>
   )
 }

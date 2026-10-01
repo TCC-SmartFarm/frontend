@@ -11,6 +11,17 @@ export const DialogTrigger = DialogPrimitive.Trigger;
 export const DialogClose = DialogPrimitive.Close;
 export const DialogPortal = DialogPrimitive.Portal;
 
+/**
+ * Camada do modal: z-[1100], e não o z-50 padrão do shadcn.
+ *
+ * O Leaflet empilha os panes do mapa entre z-index 200 e 700 sem criar
+ * contexto de empilhamento próprio, e o painel lateral do mapa usa z-[1000].
+ * Com z-50 o modal abria atrás do mapa: o overlay escurecia só a sidebar e o
+ * topo, e o formulário ficava invisível embaixo dos tiles. Medido na página
+ * do mapa com o "Adicionar sensor".
+ */
+const DIALOG_LAYER = "z-[1100]";
+
 export const DialogOverlay = forwardRef<
     ElementRef<typeof DialogPrimitive.Overlay>,
     ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
@@ -18,7 +29,8 @@ export const DialogOverlay = forwardRef<
     <DialogPrimitive.Overlay
         ref={ref}
         className={cn(
-            "fixed inset-0 z-50 bg-[rgba(32,26,19,0.55)] backdrop-blur-sm",
+            "fixed inset-0 bg-[rgba(32,26,19,0.55)] backdrop-blur-sm",
+            DIALOG_LAYER,
             "data-[state=open]:animate-in data-[state=open]:fade-in-0",
             "data-[state=closed]:animate-out data-[state=closed]:fade-out-0",
             className,
@@ -39,7 +51,8 @@ export const DialogContent = forwardRef<
         <DialogPrimitive.Content
             ref={ref}
             className={cn(
-                "fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2",
+                "fixed left-1/2 top-1/2 w-full max-w-lg -translate-x-1/2 -translate-y-1/2",
+                DIALOG_LAYER,
                 "rounded-xl bg-white p-6 shadow-xl outline-none",
                 "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
                 "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
