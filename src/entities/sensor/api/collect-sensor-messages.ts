@@ -1,4 +1,4 @@
-import { KNOWN_DEVICE_EUIS } from "../model/known-devices";
+import { fetchRegisteredDevEUIs } from "./fetch-registered-dev-euis";
 import { fetchSensorLatestCache } from "./fetch-sensor-latest-cache";
 import { fetchSensorsLatest, type LatestMessage } from "./fetch-sensors-latest";
 
@@ -25,28 +25,37 @@ const mostRecent = (messages: LatestMessage[]): LatestMessage | null =>
   );
 
 /**
- * Quais dispositivos existem, segundo `/api/sensors/all/:userId`.
+ * Quais dispositivos existem: os que `/api/sensors/all/:userId` conhece somados
+ * aos que o usuário cadastrou no Supabase.
  *
- * Só a lista interessa aqui, não as leituras: o que essa rota devolve por
+ * As duas fontes cobrem casos diferentes. A `/all` traz o que já tem leitura
+ * sob este userId — é por ela que chegam os sensores do simulador, que não
+ * estão cadastrados em lugar nenhum. O cadastro traz o sensor recém-adicionado
+ * e o que está com o cache frio.
+ *
+ * Só a lista interessa da `/all`, não as leituras: o que essa rota devolve por
  * sensor é o `LINDEX 0` do Redis, que sofre da mesma inversão descrita acima.
- *
- * Ela falha de dois jeitos previsíveis com o cache frio — **404** se o usuário
- * não tem leitura nenhuma e **500** se tem, porque o `group()` antes do
+ * E ela falha de dois jeitos previsíveis com o cache frio — **404** se o
+ * usuário não tem leitura nenhuma e **500** se tem, porque o `group()` antes do
  * `pivot` junta o boolean `validity` com os floats e o Influx recusa a
- * consulta com `schema collision`. Nos dois casos sobra a lista conhecida.
+ * consulta com `schema collision`. Nos dois casos sobra o cadastro.
  */
 const discoverDevEUIs = async (userId: string, accessToken: string): Promise<string[]> => {
-  const found: string[] = [];
-  try {
-    const response = await fetchSensorsLatest(userId, accessToken);
-    for (const msg of response.leituras ?? []) {
-      const devEUI = messageDevEUI(msg);
-      if (devEUI) found.push(devEUI);
+  const fromApi = async (): Promise<string[]> => {
+    try {
+      const response = await fetchSensorsLatest(userId, accessToken);
+      return (response.leituras ?? []).map(messageDevEUI).filter(Boolean);
+    } catch {
+      // Silencioso de propósito: 404 e 500 aqui são estado normal de cache frio.
+      return [];
     }
-  } catch {
-    // Silencioso de propósito: 404 e 500 aqui são estado normal de cache frio.
-  }
-  return [...new Set([...KNOWN_DEVICE_EUIS, ...found])];
+  };
+
+  const [registered, found] = await Promise.all([
+    fetchRegisteredDevEUIs(userId, accessToken),
+    fromApi(),
+  ]);
+  return [...new Set([...registered, ...found])];
 };
 
 /**
