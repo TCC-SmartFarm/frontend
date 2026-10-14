@@ -11,6 +11,9 @@ export const useRegisterSensor = () => {
 
   return useMutation({
     mutationFn: async (registration: SensorRegistration) => {
+      // Sem esta guarda, um clique antes de o useUserId responder gravaria uma
+      // linha com userId vazio na tabela users.
+      if (!userId) throw new Error("Identidade do usuário ainda não carregou");
       const token = await getToken();
       return registerSensor(userId, registration, token);
     },

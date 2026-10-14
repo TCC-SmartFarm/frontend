@@ -24,7 +24,8 @@ export const historyQueryOptions = (
   getToken: () => Promise<string>,
 ) => ({
   queryKey: readingKeys.history(devEUI ?? "__none__", userId),
-  enabled: !!devEUI,
+  // O userId chega vazio enquanto o useUserId consulta o Supabase.
+  enabled: !!devEUI && !!userId,
   staleTime: HISTORY_STALE_MS,
   queryFn: async (): Promise<HistoryCache> => {
     if (!devEUI) return { readings: [] };
