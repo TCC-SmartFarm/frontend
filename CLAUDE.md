@@ -99,10 +99,14 @@ o que gerava um loop de redirecionamento entre a landing e o painel.
 
 > **`Missing Refresh Token`**: com o fallback desligado o SDK não tem plano B e estoura seco. Exige
 > **Allow Offline Access** ligado na API dentro do Auth0 **e um login novo** — o refresh token só é
-> emitido no login, então ligar a opção sem relogar não muda nada. O `useSensorsList` protege o
-> painel desse erro com um `catch` que devolve lista vazia: ele abre no estado vazio em vez de cair
-> na tela de erro. Antes esse amortecedor vinha de graça dos sensores de demonstração, que eram
-> montados antes de pedir o token; com eles removidos, quem segura é o `catch`.
+> emitido no login, então ligar a opção sem relogar não muda nada. Desde out/2026 o `useAuthToken`
+> trata `missing_refresh_token` como `login_required` e **manda para o login** — antes ele relançava
+> o erro, e o cadastro de sensor falhava seco enquanto o painel abria vazio (o `catch` do
+> `useSensorsList` engolia o mesmo erro), escondendo que a sessão estava quebrada.
+>
+> O mesmo erro com audience `.../api/v2/` (Management API, perfil do usuário) é **esperado** e
+> inofensivo: sem MRRT, o refresh token é guardado por audience, e o da Management API nunca é
+> emitido no login. O `useUserProfile` cai no fallback dos claims do ID token.
 
 ---
 

@@ -23,9 +23,18 @@ export const useAuthToken = () => {
       });
     } catch (err) {
       // Sessão do Auth0 expirada: a renovação silenciosa falha e o usuário
-      // precisa logar de novo.
+      // precisa logar de novo. `missing_refresh_token` entra junto: com o
+      // fallback de iframe desligado, é o que o SDK lança quando o access token
+      // venceu e o login não deixou refresh token no cache (Allow Offline Access
+      // desligado na API, ou login feito antes de ligá-lo). Só um login novo
+      // emite um — sem isto, o cadastro de sensor falhava seco.
       const code = (err as { error?: string })?.error;
-      if ((code === "login_required" || code === "consent_required") && !redirecionandoParaLogin) {
+      if (
+        (code === "login_required" ||
+          code === "consent_required" ||
+          code === "missing_refresh_token") &&
+        !redirecionandoParaLogin
+      ) {
         redirecionandoParaLogin = true;
         await loginWithRedirect({
           appState: { returnTo: window.location.pathname },
