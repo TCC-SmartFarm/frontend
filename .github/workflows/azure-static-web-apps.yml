@@ -49,8 +49,9 @@ jobs:
           # Cadastro de sensor direto na tabela users. Só a chave publishable.
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
-          # Opcional: troca o provedor de tiles do mapa (padrão: Carto, sem chave)
+          # Opcional: troca o provedor de tiles do mapa (padrão: Carto)
           VITE_MAP_TILE_URL: ${{ vars.VITE_MAP_TILE_URL }}
-
-          # Variáveis futuras
-          # VITE_MAP_TILE_API_KEY: ${{ secrets.VITE_MAP_TILE_API_KEY }}
+          # Chave do Carto basemaps. Variable, não Secret: vai para o bundle e
+          # qualquer um a lê no DevTools — a proteção é a restrição de domínio
+          # configurada no painel do Carto.
+          VITE_MAP_TILE_API_KEY: ${{ vars.VITE_MAP_TILE_API_KEY }}

@@ -119,11 +119,16 @@ export const DashboardMapPage = () => {
     if (!containerRef.current || mapRef.current) return
     const map = L.map(containerRef.current).setView(MAP_CENTER, MAP_ZOOM)
     // O tile.openstreetmap.org bloqueia apps deployados (política de uso).
-    // Padrão: Carto (gratuito p/ uso não-comercial, sem chave); VITE_MAP_TILE_URL
-    // permite trocar por MapTiler/Stadia sem mexer no código.
+    // Padrão: Carto, que passou a exigir chave em `?key=` — sem ela cada
+    // tile volta 200 com a marca "API KEY REQUIRED", então o mapa não quebra,
+    // só fica cinza. VITE_MAP_TILE_URL permite trocar por MapTiler/Stadia.
+    const cartoUrl =
+      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
     const tileUrl =
       env.mapTileUrl ||
-      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+      (env.mapTileApiKey
+        ? `${cartoUrl}?key=${encodeURIComponent(env.mapTileApiKey)}`
+        : cartoUrl)
     L.tileLayer(tileUrl, {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
