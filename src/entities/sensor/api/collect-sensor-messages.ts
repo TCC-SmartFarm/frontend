@@ -1,4 +1,4 @@
-import { fetchRegisteredDevEUIs } from "./fetch-registered-dev-euis";
+import { fetchRegisteredDevices, type RegisteredDevice } from "./fetch-registered-devices";
 import { fetchSensorLatestCache } from "./fetch-sensor-latest-cache";
 import { fetchSensorsLatest, type LatestMessage } from "./fetch-sensors-latest";
 
@@ -40,7 +40,10 @@ const mostRecent = (messages: LatestMessage[]): LatestMessage | null =>
  * `pivot` junta o boolean `validity` com os floats e o Influx recusa a
  * consulta com `schema collision`. Nos dois casos sobra o cadastro.
  */
-const discoverDevEUIs = async (userId: string, accessToken: string): Promise<string[]> => {
+const discoverDevices = async (
+  userId: string,
+  accessToken: string,
+): Promise<{ devEUIs: string[]; registered: RegisteredDevice[] }> => {
   const fromApi = async (): Promise<string[]> => {
     try {
       const response = await fetchSensorsLatest(userId, accessToken);
@@ -52,10 +55,29 @@ const discoverDevEUIs = async (userId: string, accessToken: string): Promise<str
   };
 
   const [registered, found] = await Promise.all([
-    fetchRegisteredDevEUIs(userId, accessToken),
+    fetchRegisteredDevices(userId, accessToken),
     fromApi(),
   ]);
-  return [...new Set([...registered, ...found])];
+  const devEUIs = [...new Set([...registered.map((d) => d.devEUI), ...found])];
+  return { devEUIs, registered };
+};
+
+/**
+ * Completa a posição da leitura com a do cadastro. A leitura tem prioridade:
+ * se um dia o sensor ou o back-end passar a mandar lat/long, vale a dela.
+ */
+const withRegisteredLocation = (
+  msg: LatestMessage,
+  registered: RegisteredDevice | undefined,
+): LatestMessage => {
+  if (!registered || registered.latitude === null || registered.longitude === null) return msg;
+  const payload = msg.payload ?? {};
+  const hasOwn = payload.latitude != null && payload.latitude !== "" && payload.longitude != null && payload.longitude !== "";
+  if (hasOwn) return msg;
+  return {
+    ...msg,
+    payload: { ...payload, latitude: registered.latitude, longitude: registered.longitude },
+  };
 };
 
 /**
@@ -73,7 +95,8 @@ export const collectSensorMessages = async (
   userId: string,
   accessToken: string,
 ): Promise<LatestMessage[]> => {
-  const devEUIs = await discoverDevEUIs(userId, accessToken);
+  const { devEUIs, registered } = await discoverDevices(userId, accessToken);
+  const registeredByEUI = new Map(registered.map((d) => [d.devEUI.toLowerCase(), d]));
 
   const messages = await Promise.all(
     devEUIs.map((devEUI) =>
@@ -81,5 +104,7 @@ export const collectSensorMessages = async (
     ),
   );
 
-  return messages.filter((m): m is LatestMessage => m !== null);
+  return messages
+    .filter((m): m is LatestMessage => m !== null)
+    .map((m) => withRegisteredLocation(m, registeredByEUI.get(messageDevEUI(m).toLowerCase())));
 };
