@@ -111,7 +111,6 @@ export const Sidebar = () => {
         </div>
         <div className="flex min-w-0 flex-1 flex-col">
           <span className="truncate text-[13px] font-semibold text-white">{displayName}</span>
-          <span className="text-[11px] text-leaf-200 opacity-80">Fazenda Serra Verde</span>
         </div>
       </div>
     </aside>
