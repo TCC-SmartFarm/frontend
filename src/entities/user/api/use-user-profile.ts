@@ -1,61 +1,55 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
-import { userKeys } from "./query-keys";
-import {
-  MANAGEMENT_SCOPE,
-  fetchUserProfile,
-  managementAudience,
-  toUserProfile,
-  type UserProfile,
-} from "./fetch-user-profile";
+import { useProfileOverrideStore } from "@/shared/stores/profile-override-store";
+import type { UserProfile } from "./fetch-user-profile";
+
+// Claims que a Action de post-login do Auth0 grava no ID token a partir do
+// `user_metadata` — o único lugar onde o usuário consegue editar o próprio nome.
+const CLAIM_NAME = "https://smartfarm-api/name";
+const CLAIM_NICKNAME = "https://smartfarm-api/nickname";
+
+const claim = (value: unknown): string | undefined =>
+  typeof value === "string" && value.trim() !== "" ? value : undefined;
 
 /**
- * Perfil do usuário lido da Management API do Auth0.
+ * Perfil do usuário a partir do ID token.
  *
- * Por que não basta o `user` do ID token: um SPA só consegue escrever em
- * `user_metadata`, e `user_metadata` nunca vira claim raiz do token — nem depois
- * de re-login. Sem esta query, um nome editado jamais apareceria na UI.
+ * Antes isto lia a Management API do Auth0, mas o token dela não renova sem
+ * popup: só o navegador que salvou via popup enxergava o nome novo, e só até o
+ * token expirar. Agora a Action copia `user_metadata.name`/`nickname` para o
+ * ID token, que chega em qualquer navegador. Sem a claim (usuário que nunca
+ * editou), vale o nome da raiz da conta.
  *
- * Este caminho depende de silent auth por iframe (o provider não usa
- * refresh tokens), que Safari/Firefox bloqueiam. Por isso:
- *   - `retry: false`, senão cada falha vira 3 iframes de até 60s;
- *   - `timeoutInSeconds` curto;
- *   - `fallback` para os claims do ID token, tratado como caminho normal e não
- *     como exceção — a UI degrada para o nome do login em vez de quebrar.
+ * Entre salvar e o próximo login, vale o que foi salvo neste navegador
+ * (`profile-override-store`).
  */
 export const useUserProfile = () => {
-  const { user, isAuthenticated, getAccessTokenSilently } = useAuth0();
+  const { user } = useAuth0();
   const sub = user?.sub ?? "";
+  const override = useProfileOverrideStore((s) => (sub ? s.bySub[sub] : undefined));
+  const clearOverride = useProfileOverrideStore((s) => s.clearOverride);
 
-  const fallback: UserProfile = {
-    name: user?.name ?? "",
-    nickname: user?.nickname ?? "",
+  const fromToken: UserProfile = {
+    name: claim(user?.[CLAIM_NAME]) ?? user?.name ?? "",
+    nickname: claim(user?.[CLAIM_NICKNAME]) ?? user?.nickname ?? "",
     email: user?.email ?? "",
     picture: user?.picture,
   };
 
-  const query = useQuery({
-    queryKey: userKeys.profile(sub),
-    enabled: isAuthenticated && !!sub,
-    staleTime: 30 * 60 * 1000,
-    retry: false,
-    queryFn: async (): Promise<UserProfile> => {
-      const token = await getAccessTokenSilently({
-        authorizationParams: {
-          audience: managementAudience(),
-          scope: MANAGEMENT_SCOPE,
-        },
-        timeoutInSeconds: 10,
-      });
-      return toUserProfile(await fetchUserProfile(sub, token));
-    },
-  });
+  // O token já trouxe o que foi salvo: a ponte não é mais necessária.
+  const caughtUp =
+    !!override && override.name === fromToken.name && override.nickname === fromToken.nickname;
+  useEffect(() => {
+    if (caughtUp) clearOverride(sub);
+  }, [caughtUp, clearOverride, sub]);
+
+  const profile: UserProfile = override ? { ...fromToken, ...override } : fromToken;
 
   return {
-    ...query,
-    profile: query.data ?? fallback,
-    /** true quando os dados vêm do ID token porque a Management API não respondeu. */
-    isFallback: !query.data,
+    profile,
     sub,
+    // Mantido pela interface de quem consome: o perfil sai do token, que já
+    // está disponível quando a página protegida monta.
+    isPending: false,
   };
 };

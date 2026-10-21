@@ -1,7 +1,7 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useAuth0 } from "@auth0/auth0-react";
 import { ApiError } from "@/shared/api/api-error";
-import { userKeys } from "./query-keys";
+import { useProfileOverrideStore } from "@/shared/stores/profile-override-store";
 import {
   MANAGEMENT_SCOPE,
   managementAudience,
@@ -17,8 +17,8 @@ interface UpdateProfilePayload {
 }
 
 export const useUpdateUserProfile = () => {
-  const { getAccessTokenSilently, user } = useAuth0();
-  const qc = useQueryClient();
+  const { getAccessTokenSilently, getAccessTokenWithPopup, user } = useAuth0();
+  const setOverride = useProfileOverrideStore((s) => s.setOverride);
 
   return useMutation({
     mutationFn: async (payload: UpdateProfilePayload): Promise<UserProfile> => {
@@ -28,13 +28,24 @@ export const useUpdateUserProfile = () => {
 
       // `user_metadata` é o único campo gravável pelo próprio usuário: name,
       // nickname e email na raiz exigem update:users, escopo exclusivo de M2M.
-      const managementToken = await getAccessTokenSilently({
-        authorizationParams: {
-          audience: managementAudience(),
-          scope: MANAGEMENT_SCOPE,
-        },
-        timeoutInSeconds: 10,
-      });
+      const managementParams = { audience: managementAudience(), scope: MANAGEMENT_SCOPE };
+      let managementToken: string | undefined;
+      try {
+        managementToken = await getAccessTokenSilently({
+          authorizationParams: managementParams,
+          timeoutInSeconds: 10,
+        });
+      } catch {
+        // Com refresh tokens, o SDK só renova o token da audience do login
+        // (`smartfarm-api`). O da Management API nunca tem refresh token, então
+        // o silencioso falha sem nem chegar ao Auth0 (`missing_refresh_token`).
+        // O popup pede o token interativamente; precisa sair do clique em
+        // Salvar, que ainda está ativo aqui porque a falha acima é imediata.
+        managementToken = await getAccessTokenWithPopup({ authorizationParams: managementParams });
+      }
+      if (!managementToken) {
+        throw new ApiError(0, null, "Token da Management API não obtido");
+      }
 
       const response = await fetch(managementUserUrl(user.sub), {
         method: "PATCH",
@@ -66,9 +77,9 @@ export const useUpdateUserProfile = () => {
     },
     onSuccess: (profile) => {
       if (!user?.sub) return;
-      // Semear o cache em vez de invalidar: invalidar dispararia outro refetch
-      // e, com ele, mais um round-trip de silent auth por iframe.
-      qc.setQueryData(userKeys.profile(user.sub), profile);
+      // O ID token só traz o valor novo no próximo login; até lá, vale o que
+      // acabou de ser salvo (ver profile-override-store).
+      setOverride(user.sub, { name: profile.name, nickname: profile.nickname });
     },
   });
 };

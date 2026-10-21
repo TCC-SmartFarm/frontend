@@ -1,11 +1,9 @@
 import { env } from "@/shared/config/env";
-import { ApiError } from "@/shared/api/api-error";
 
 /**
  * Escopos "do próprio usuário" da Management API — os únicos que um SPA consegue
- * obter via getAccessTokenSilently. Um único string compartilhado por leitura e
- * escrita de propósito: o SDK cacheia o token por (audience, scope), e pedir
- * escopos diferentes criaria duas entradas e dois round-trips de silent auth.
+ * obter. Hoje só a gravação do perfil usa a Management API (via popup); a
+ * leitura sai das claims do ID token.
  */
 export const MANAGEMENT_SCOPE =
   "read:current_user read:current_user_metadata update:current_user_metadata";
@@ -46,29 +44,3 @@ export const toUserProfile = (raw: Auth0UserProfile): UserProfile => ({
   email: raw.email ?? "",
   picture: raw.picture,
 });
-
-export const fetchUserProfile = async (
-  sub: string,
-  managementToken: string,
-): Promise<Auth0UserProfile> => {
-  let response: Response;
-  try {
-    response = await fetch(managementUserUrl(sub), {
-      headers: { Authorization: `Bearer ${managementToken}` },
-    });
-  } catch {
-    throw new ApiError(0, null, "Falha de rede ao consultar o perfil");
-  }
-
-  if (!response.ok) {
-    let body: unknown = null;
-    try {
-      body = await response.json();
-    } catch {
-      body = null;
-    }
-    throw new ApiError(response.status, body, `Auth0 error ${response.status}`);
-  }
-
-  return response.json() as Promise<Auth0UserProfile>;
-};
