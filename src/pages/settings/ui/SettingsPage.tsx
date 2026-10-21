@@ -68,7 +68,6 @@ function PerfilTab() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Skeleton className="h-16" />
             <Skeleton className="h-16" />
-            <Skeleton className="h-16 md:col-span-2" />
           </div>
         </Card>
       ) : (
@@ -78,7 +77,6 @@ function PerfilTab() {
           key={sub}
           initialName={profile.name}
           initialNickname={profile.nickname}
-          email={profile.email}
         />
       )}
 
