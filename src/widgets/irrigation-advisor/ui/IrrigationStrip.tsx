@@ -101,9 +101,19 @@ export const IrrigationStrip = () => {
       {/* z acima dos painéis do Leaflet (z-[1000]), senão o card abre por baixo
           da lista de sensores do mapa. A altura máxima é o espaço que sobra
           abaixo da faixa: em notebook o card inteiro não cabe, e sem isso o
-          rodapé ficaria fora da tela, sem como rolar até ele. */}
+          rodapé ficaria fora da tela, sem como rolar até ele.
+
+          onOpenAutoFocus: por padrão o Radix foca o primeiro elemento focável
+          do conteúdo ao abrir — no card, o botão "i" do rodapé —, e o tooltip
+          dele abre com foco, então aparecia aberto toda vez. O foco vai para o
+          próprio container (tabIndex -1 do FocusScope): o Tab do teclado
+          continua entrando no card, e o tooltip só abre com mouse ou Tab. */}
       <PopoverContent
         align="start"
+        onOpenAutoFocus={(e) => {
+          e.preventDefault()
+          ;(e.currentTarget as HTMLElement).focus()
+        }}
         className="z-[1100] max-h-[var(--radix-popover-content-available-height)] w-[400px] overflow-y-auto rounded-2xl [scrollbar-width:thin] bg-transparent p-0 shadow-xl motion-reduce:animate-none"
       >
         {sensors.length > 1 && (
