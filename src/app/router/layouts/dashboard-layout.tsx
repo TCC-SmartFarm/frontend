@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import { Sidebar } from '@/widgets/sidebar/ui/Sidebar'
 import { SensorSearch } from '@/features/sensor-search/ui/SensorSearch'
+import { IrrigationStrip } from '@/widgets/irrigation-advisor/ui/IrrigationStrip'
 import { Badge } from '@/shared/ui/badge'
 import { LoadingOverlay } from '@/shared/ui/loading-overlay'
 import { useSensorsList } from '@/entities/sensor/api/use-sensors-list'
@@ -33,6 +34,7 @@ export const DashboardLayout = () => {
           style={{ background: 'rgba(250,247,241,0.88)' }}
         >
           <SensorSearch />
+          <IrrigationStrip />
           <div className="flex-1" />
           {sensorCount > 0 && (
             <Badge tone="leaf" dot>
