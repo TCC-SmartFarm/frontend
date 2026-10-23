@@ -6,16 +6,18 @@ import { cn } from '@/shared/lib/utils'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
 import {
   TREND_SENTENCE,
-  irrigationDescription,
   irrigationHeadline,
   irrigationTheme,
   recommendedDayLabel,
   weekdayShort,
 } from '../lib/irrigation-theme'
+import { irrigationDescription } from '../lib/irrigation-copy'
 
 interface IrrigationCardProps {
   data: IrrigationResponse
   sensorName: string
+  /** Substitui o nome no canto do card — o seletor de sensores, quando há vários. */
+  sensorSlot?: ReactNode
 }
 
 const TREND_ICON = {
@@ -41,7 +43,7 @@ const mm = (v: number) => `${v.toFixed(v >= 10 ? 0 : 1)} mm`
  * público não tem intimidade com painel de dados, e "Prevista em 24 h · 100%"
  * já foi lido como chance de chuva quando era a umidade do solo.
  */
-export const IrrigationCard = ({ data, sensorName }: IrrigationCardProps) => {
+export const IrrigationCard = ({ data, sensorName, sensorSlot }: IrrigationCardProps) => {
   const { irrigation, soil_moisture_prediction: prediction, forecast_summary: summary } = data
   const { icon: Icon, color } = irrigationTheme(irrigation.action)
   const days = data.forecast_today_and_next_5_days
@@ -60,7 +62,7 @@ export const IrrigationCard = ({ data, sensorName }: IrrigationCardProps) => {
       <div className="relative flex flex-col gap-4 p-6">
         <div className="flex items-center justify-between gap-3 text-[11px] font-bold uppercase tracking-[0.1em] text-white/75">
           <span>Irrigação</span>
-          <span className="truncate normal-case tracking-normal">{sensorName}</span>
+          {sensorSlot ?? <span className="truncate normal-case tracking-normal">{sensorName}</span>}
         </div>
 
         <div className="flex items-start gap-4">
@@ -69,7 +71,9 @@ export const IrrigationCard = ({ data, sensorName }: IrrigationCardProps) => {
             <h3 className="font-display text-2xl font-bold leading-tight tracking-tight">
               {irrigationHeadline(data)}
             </h3>
-            <p className="mt-1.5 text-[13px] leading-snug text-white/85">{irrigationDescription(data)}</p>
+            <p className="mt-1.5 text-[13px] leading-snug text-white/85 [&_strong]:font-semibold [&_strong]:text-white">
+              {irrigationDescription(data, sensorName)}
+            </p>
           </div>
         </div>
 
@@ -97,7 +101,10 @@ export const IrrigationCard = ({ data, sensorName }: IrrigationCardProps) => {
             </InfoLine>
             {irrigation.recommended_day && (
               <InfoLine icon={CalendarDays}>
-                O melhor dia para irrigar é <strong>{recommendedDayLabel(irrigation.recommended_day)}</strong>
+                O melhor dia para irrigar é{' '}
+                <strong>
+                  {irrigation.should_irrigate_today ? 'hoje' : recommendedDayLabel(irrigation.recommended_day)}
+                </strong>
               </InfoLine>
             )}
           </ul>

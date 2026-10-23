@@ -39,7 +39,7 @@ export const weekdayShort = (date: string): string =>
   parseLocalDate(date).toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "");
 
 /** "sábado", "quarta" — sem o "-feira", que estoura a largura da faixa. */
-const weekdayName = (date: string): string =>
+export const weekdayName = (date: string): string =>
   parseLocalDate(date).toLocaleDateString("pt-BR", { weekday: "long" }).replace("-feira", "");
 
 /** Sábado e domingo pedem "no"; os dias "-feira" pedem "na". */
@@ -65,31 +65,6 @@ export const irrigationHeadline = ({ irrigation }: IrrigationResponse): string =
       return "Vale dar uma olhada no campo";
     case "manual_check_sensor":
       return "Confira o sensor";
-  }
-};
-
-/**
- * Texto do card, escrito aqui e não lido do `message` do MSS: a frase de lá é
- * técnica ("A leitura está entre os limiares; calibre o sensor..."), e o
- * painel é para quem não tem intimidade com esses termos. O MSS continua
- * decidindo a ação; o front só escolhe as palavras.
- */
-export const irrigationDescription = ({ irrigation }: IrrigationResponse): string => {
-  const day = irrigation.recommended_day;
-  switch (irrigation.action) {
-    case "irrigate_on_recommended_day":
-      if (irrigation.should_irrigate_today || !day) {
-        return "O solo está ficando seco, e hoje é o dia com menos chance de chuva pela frente. Se puder, aproveite para irrigar ainda hoje, só vale dar uma olhada no céu antes de começar.";
-      }
-      return `O solo está ficando seco. Olhando a previsão dos próximos dias, ${onWeekday(day)} é quando há menos chance de chuva, então é uma ótima data para irrigar. Até lá, vale acompanhar se a previsão continua a mesma.`;
-    case "irrigate_with_caution":
-      return "O solo está seco, mas a previsão mostra chuva até no dia mais tranquilo da semana. Você pode irrigar, porém é possível que a própria chuva resolva. Que tal conferir o solo e o céu antes de ligar a irrigação?";
-    case "not_needed_now":
-      return "O sensor indica solo úmido, não há necessidade de irrigar no momento!";
-    case "manual_check":
-      return "A umidade do solo está numa faixa intermediária, nem seca nem encharcada. Nesse caso preferimos não arriscar uma recomendação automática, então vale dar uma passada no campo e pensar no que a sua plantação costuma precisar.";
-    case "manual_check_sensor":
-      return "As últimas leituras ficaram paradas no limite do sensor, o que costuma indicar algum problema na instalação ou na calibração. Antes de decidir sobre a irrigação, confira se o sensor está bem posicionado no solo.";
   }
 };
 
