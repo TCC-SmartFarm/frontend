@@ -27,7 +27,7 @@ export interface IrrigationResponse {
   sensor_id: string;
   location: { latitude: number; longitude: number; timezone: string };
   sensor: {
-    /** ISO em UTC. O MSS usa o timestamp cru do sensor, sem a correção de sensor-clock.ts. */
+    /** ISO em UTC: o timestamp do sensor, que já chega em UTC (conferido em 23/10/2026). */
     timestamp: string;
     soil_moisture_raw: number;
     soil_moisture_kalman_filtered: number;

@@ -1,5 +1,4 @@
 import { api } from "@/shared/api/base-api";
-import { correctSensorTimestamp } from "@/shared/lib/sensor-clock";
 import type { SensorPayload } from "@/entities/sensor/model/types";
 
 export interface RawReading {
@@ -41,6 +40,5 @@ export const fetchSensorHistory = async (
 ): Promise<RawReading[]> => {
   const path = `/api/sensors/influx/${encodeURIComponent(userId)}/${days}/${encodeURIComponent(devEUI)}`;
   const readings = await api<RawReading[] | null>(path, { accessToken });
-  // Ver sensor-clock.ts: o relógio do sensor chega 3 h atrasado.
-  return (readings ?? []).map((r) => ({ ...r, timestamp: correctSensorTimestamp(r.timestamp) }));
+  return readings ?? [];
 };

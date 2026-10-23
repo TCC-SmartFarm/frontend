@@ -1,5 +1,4 @@
 import { api } from "@/shared/api/base-api";
-import { correctSensorTimestamp } from "@/shared/lib/sensor-clock";
 import type { LatestMessage } from "./fetch-sensors-latest";
 
 /**
@@ -29,10 +28,5 @@ export const fetchSensorLatestCache = async (
 ): Promise<LatestMessage[]> => {
   const path = `/api/sensors/latest/${encodeURIComponent(userId)}/${encodeURIComponent(devEUI)}`;
   const messages = await api<LatestMessage[] | null>(path, { accessToken });
-  // Ver sensor-clock.ts: o relógio do sensor chega 3 h atrasado.
-  return (messages ?? []).map((msg) =>
-    msg.payload?.timestamp === undefined
-      ? msg
-      : { ...msg, payload: { ...msg.payload, timestamp: correctSensorTimestamp(msg.payload.timestamp) } },
-  );
+  return messages ?? [];
 };
