@@ -17,18 +17,8 @@ export interface MetricDef {
 export const METRICS: MetricDef[] = [
   { key: 'soil_moisture', label: 'Umidade solo', unit: '%', icon: Droplets },
   { key: 'air_humidity', label: 'Umidade ar', unit: '%', icon: CloudRain },
-  {
-    // Luz de dia claro passa de 90.000 lx e "98.765" estoura o quadradinho.
-    // Nessa magnitude a precisão não informa nada, então abrevia em milhares.
-    key: 'luminosity',
-    label: 'Luz',
-    unit: 'lx',
-    icon: Sun,
-    format: (v) =>
-      v >= 1000
-        ? `${(v / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}k`
-        : String(Math.round(v)),
-  },
+  // O sensor manda luminosidade em porcentagem (0–100), não em lux.
+  { key: 'luminosity', label: 'Luz', unit: '%', icon: Sun },
   { key: 'air_temperature', label: 'Temp. ar', unit: '°C', icon: Wind },
   { key: 'battery', label: 'Bateria', unit: '%', icon: Battery },
 ]

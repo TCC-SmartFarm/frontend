@@ -206,7 +206,7 @@ export const ParameterPageLayout = ({ config }: { config: ParamConfig }) => {
           Acompanhe {label.toLowerCase()} em cada sensor da sua propriedade.{' '}
           <strong>
             Faixa ideal: {idealMin}–{idealMax}
-            {unit === 'lux' ? ' ' + unit : unit}
+            {unit}
           </strong>
           .
         </p>

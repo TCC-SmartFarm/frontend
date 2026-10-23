@@ -2,7 +2,7 @@ const params = [
   { label: 'Umidade do solo', value: '68%',   sub: 'Ideal · estável',    icon: 'droplets',    color: '#2e6b7a' },
   { label: 'Temp. solo',      value: '24°C',  sub: 'Dentro do ideal',   icon: 'thermometer', color: '#b97239' },
   { label: 'Umidade ar',      value: '62%',   sub: 'Estável',            icon: 'cloudRain',   color: '#5d87a0' },
-  { label: 'Luminosidade',    value: '1.240', sub: 'lux · dia claro',    icon: 'sun',         color: '#c89a1f' },
+  { label: 'Luminosidade',    value: '72%',   sub: 'Dia claro',          icon: 'sun',         color: '#c89a1f' },
   { label: 'Temp. ar',        value: '28°C',  sub: 'Subindo',            icon: 'thermSun',    color: '#a14a2e' },
   { label: 'Bateria',         value: '87%',   sub: '~ 6 meses',          icon: 'battery',     color: '#456830' },
 ]

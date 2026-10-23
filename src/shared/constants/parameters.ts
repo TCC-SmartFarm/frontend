@@ -32,7 +32,7 @@ export const SENSOR_PARAMETERS: Record<string, ParameterMeta> = {
   },
   luminosity: {
     label: "Luminosidade",
-    unit: "lux",
+    unit: "%",
     icon: Sun,
     color: "#f39c12",
     route: "/dashboard/luminosity",

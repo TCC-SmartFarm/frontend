@@ -23,7 +23,8 @@ export const DEFAULT_PARAM_THRESHOLDS: ParamThresholdMap = {
   soil_moisture: { alertLow: 20, warnLow: 30, warnHigh: 80, alertHigh: 90 },
   air_humidity: { alertLow: 15, warnLow: 20, warnHigh: 90, alertHigh: 95 },
   air_temperature: { alertLow: 0, warnLow: 5, warnHigh: 35, alertHigh: 40 },
-  luminosity: {},
+  // Em % (o sensor não manda lux). Faixa ideal 60–80%, em torno de 70%.
+  luminosity: { alertLow: 50, warnLow: 60, warnHigh: 80, alertHigh: 90 },
   battery: { alertLow: 15, warnLow: 20 },
 };
 

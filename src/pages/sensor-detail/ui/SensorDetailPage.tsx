@@ -25,7 +25,7 @@ interface MetricDef {
 const METRICS: MetricDef[] = [
   { key: 'soil_moisture', label: 'Umidade do solo', unit: '%', icon: Droplets, format: (v) => Math.round(v).toString() },
   { key: 'air_humidity', label: 'Umidade do ar', unit: '%', icon: CloudRain, format: (v) => Math.round(v).toString() },
-  { key: 'luminosity', label: 'Luminosidade', unit: 'lx', icon: Sun, format: (v) => Math.round(v).toLocaleString('pt-BR') },
+  { key: 'luminosity', label: 'Luminosidade', unit: '%', icon: Sun, format: (v) => Math.round(v).toString() },
   { key: 'air_temperature', label: 'Temp. do ar', unit: '°C', icon: Wind, format: (v) => v.toFixed(1) },
   { key: 'battery', label: 'Bateria', unit: '%', icon: Battery, format: (v) => Math.round(v).toString() },
 ]
