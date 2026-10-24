@@ -1,15 +1,20 @@
 import { useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
+import { useIsFetching, useQueryClient } from '@tanstack/react-query'
+import { RefreshCw } from 'lucide-react'
 import { Sidebar } from '@/widgets/sidebar/ui/Sidebar'
 import { SensorSearch } from '@/features/sensor-search/ui/SensorSearch'
 import { IrrigationStrip } from '@/widgets/irrigation-advisor/ui/IrrigationStrip'
 import { Badge } from '@/shared/ui/badge'
+import { Button } from '@/shared/ui/button'
 import { LoadingOverlay } from '@/shared/ui/loading-overlay'
 import { useSensorsList } from '@/entities/sensor/api/use-sensors-list'
 import { useSelectedSensorStore } from '@/shared/stores/selected-sensor-store'
 
 export const DashboardLayout = () => {
   const { data: sensors, isLoading, isFetching } = useSensorsList()
+  const queryClient = useQueryClient()
+  const fetchingCount = useIsFetching()
   const selectedSensorId = useSelectedSensorStore((s) => s.selectedSensorId)
   const setSelectedSensorId = useSelectedSensorStore((s) => s.setSelectedSensorId)
 
@@ -44,6 +49,16 @@ export const DashboardLayout = () => {
           {isFetching && !isLoading && (
             <span className="text-xs text-fg-subtle">Atualizando…</span>
           )}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => queryClient.invalidateQueries()}
+            disabled={fetchingCount > 0}
+            aria-label="Recarregar dados"
+          >
+            <RefreshCw size={14} className={fetchingCount > 0 ? 'animate-spin' : undefined} />
+            Recarregar
+          </Button>
         </header>
 
         <main className="flex-1 overflow-auto">
